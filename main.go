@@ -30,36 +30,64 @@ import (
 	"gorm.io/gorm"
 )
 
+// =====================================================
+// SETUP GIN ENGINE
+// =====================================================
+
 func setupEngine(db *gorm.DB, secret []byte) *gin.Engine {
 	r := gin.Default()
+
 	r.MaxMultipartMemory = 8 << 20
 
 	// Sajikan gambar hasil upload.
 	r.Static("/uploads", "uploads")
 
-	allowedOrigins := []string{"http://localhost:8081"}
+	// CORS untuk frontend lokal dan frontend produksi.
+	allowedOrigins := []string{
+		"http://localhost:8081",
+	}
+
 	if customOrigin := os.Getenv("ALLOWED_ORIGIN"); customOrigin != "" {
-		allowedOrigins = append(allowedOrigins, customOrigin)
+		for _, origin := range strings.Split(customOrigin, ",") {
+			origin = strings.TrimSpace(origin)
+
+			if origin != "" {
+				allowedOrigins = append(allowedOrigins, origin)
+			}
+		}
 	}
 
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     allowedOrigins,
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
+		AllowOrigins: allowedOrigins,
+		AllowMethods: []string{
+			"GET",
+			"POST",
+			"PUT",
+			"PATCH",
+			"DELETE",
+			"OPTIONS",
+		},
+		AllowHeaders: []string{
+			"Origin",
+			"Content-Type",
+			"Authorization",
+		},
+		ExposeHeaders: []string{
+			"Content-Length",
+		},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
 
+	// Batasi ukuran request.
 	r.Use(func(c *gin.Context) {
-		// Batas request JSON dan multipart upload.
-		limit := int64(1 << 20)
+		limit := int64(1 << 20) // 1 MB
 
 		if strings.HasPrefix(
 			strings.ToLower(c.ContentType()),
 			"multipart/form-data",
 		) {
-			limit = 6 << 20
+			limit = 6 << 20 // 6 MB
 		}
 
 		c.Request.Body = http.MaxBytesReader(
@@ -71,43 +99,47 @@ func setupEngine(db *gorm.DB, secret []byte) *gin.Engine {
 		c.Next()
 	})
 
-	// =========================
+	// =================================================
 	// AUTH
-	// =========================
+	// =================================================
+
 	authRepo := auth.NewRepository(db)
 	authService := auth.NewService(authRepo, secret)
 	authHandler := auth.NewHandler(authService)
 
 	auth.RegisterRoutes(r, authHandler)
 
-	// =========================
+	// =================================================
 	// PUBLIC ROUTES
-	// =========================
+	// =================================================
+
 	public.RegisterRoutes(r)
 
-	// Repository auth digunakan kembali oleh
-	// middleware dan modul peminjaman aset.
+	// Repository dan service autentikasi untuk middleware.
 	repo := auth.NewRepository(db)
 	service := auth.NewService(repo, secret)
 	handler := auth.NewHandler(service)
 
-	// =========================
+	// =================================================
 	// CATEGORY
-	// =========================
+	// =================================================
+
 	categoryRepo := category.NewRepository(db)
 	categoryService := category.NewService(categoryRepo)
 	categoryHandler := category.NewHandler(categoryService)
 
-	// =========================
+	// =================================================
 	// LOCATION
-	// =========================
+	// =================================================
+
 	locationRepo := location.NewRepository(db)
 	locationService := location.NewService(locationRepo)
 	locationHandler := location.NewHandler(locationService)
 
-	// =========================
+	// =================================================
 	// ASSET
-	// =========================
+	// =================================================
+
 	assetRepo := asset.NewRepository(db)
 	assetService := asset.NewService(
 		assetRepo,
@@ -116,58 +148,73 @@ func setupEngine(db *gorm.DB, secret []byte) *gin.Engine {
 	)
 	assetHandler := asset.NewHandler(assetService)
 
-	// =========================
+	// =================================================
 	// DASHBOARD
-	// =========================
+	// =================================================
+
 	dashboardRepo := dashboard.NewRepository(db)
 	dashboardService := dashboard.NewService(dashboardRepo)
 	dashboardHandler := dashboard.NewHandler(dashboardService)
 
-	// =========================
+	// =================================================
 	// COMPLAINT
-	// =========================
+	// =================================================
+
 	complaintRepo := complaint.NewRepository(db)
 	complaintService := complaint.NewService(complaintRepo)
 	complaintHandler := complaint.NewHandler(complaintService)
 
-	// =========================
+	// =================================================
 	// ASSET BROKEN
-	// =========================
+	// =================================================
+
 	assetBrokenRepo := assetbroken.NewRepository(db)
 	assetBrokenService := assetbroken.NewService(
 		assetBrokenRepo,
 		assetRepo,
 	)
-	assetBrokenHandler := assetbroken.NewHandler(assetBrokenService)
+	assetBrokenHandler := assetbroken.NewHandler(
+		assetBrokenService,
+	)
 
-	// =========================
+	// =================================================
 	// ASSET LENDING
-	// =========================
+	// =================================================
+
 	assetLendingRepo := assetlending.NewRepository(db)
 	assetLendingService := assetlending.NewService(
 		assetLendingRepo,
 		assetRepo,
 		repo,
 	)
-	assetLendingHandler := assetlending.NewHandler(assetLendingService)
+	assetLendingHandler := assetlending.NewHandler(
+		assetLendingService,
+	)
 
-	// =========================
+	// =================================================
 	// USER
-	// =========================
+	// =================================================
+
 	userRepo := user.NewRepository(db)
 	userService := user.NewService(userRepo)
 	userHandler := user.NewHandler(userService)
 
-	// =========================
+	// =================================================
 	// TEXT ANALYSIS: TF-IDF + K-MEANS
-	// =========================
-	textAnalysisRepo := textanalysis.NewRepository(db)
-	textAnalysisService := textanalysis.NewService(textAnalysisRepo)
-	textAnalysisHandler := textanalysis.NewHandler(textAnalysisService)
+	// =================================================
 
-	// =========================
+	textAnalysisRepo := textanalysis.NewRepository(db)
+	textAnalysisService := textanalysis.NewService(
+		textAnalysisRepo,
+	)
+	textAnalysisHandler := textanalysis.NewHandler(
+		textAnalysisService,
+	)
+
+	// =================================================
 	// PRIVATE ROUTES
-	// =========================
+	// =================================================
+
 	private.RegisterRoutes(
 		r,
 		handler.AuthReq(),
@@ -182,10 +229,12 @@ func setupEngine(db *gorm.DB, secret []byte) *gin.Engine {
 		textAnalysisHandler,
 	)
 
-	// =========================
-	// STATIC FRONTEND FILES
-	// =========================
+	// =================================================
+	// STATIC FRONTEND
+	// =================================================
+
 	r.Static("/client", "./frontend/client")
+
 	r.StaticFile("/", "./frontend/index.html")
 	r.StaticFile("/index.html", "./frontend/index.html")
 	r.StaticFile("/login", "./frontend/login.html")
@@ -194,30 +243,58 @@ func setupEngine(db *gorm.DB, secret []byte) *gin.Engine {
 	r.StaticFile("/register.html", "./frontend/register.html")
 	r.StaticFile("/contoh.html", "./frontend/contoh.html")
 
-	// Fallback untuk file statis di folder frontend atau pesan 404
+	// Fallback file statis dan respons 404.
 	r.NoRoute(func(c *gin.Context) {
 		path := filepath.Clean(c.Request.URL.Path)
+
+		// Hindari membaca path di luar direktori frontend.
+		if filepath.IsAbs(path) || path == "." || path == ".." ||
+			strings.HasPrefix(path, ".."+string(os.PathSeparator)) {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Halaman tidak ditemukan",
+			})
+			return
+		}
+
 		target := filepath.Join("frontend", path)
-		if fi, err := os.Stat(target); err == nil && !fi.IsDir() {
+
+		if info, err := os.Stat(target); err == nil && !info.IsDir() {
 			c.File(target)
 			return
 		}
-		c.JSON(http.StatusNotFound, gin.H{"error": "Halaman tidak ditemukan"})
+
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Halaman tidak ditemukan",
+		})
 	})
 
 	return r
 }
 
+// =====================================================
+// RUN APPLICATION
+// =====================================================
+
 func run() error {
+	// Memuat .env untuk pengembangan lokal.
+	// Pada Render, gunakan Environment Variables.
 	if err := godotenv.Load(); err != nil &&
 		!errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("load .env: %w", err)
 	}
 
+	// Validasi JWT secret.
 	secret := []byte(os.Getenv("JWT_SECRET"))
+
 	if len(secret) < 32 {
-		return fmt.Errorf("JWT_SECRET wajib diisi minimal 32 byte")
+		return fmt.Errorf(
+			"JWT_SECRET wajib diisi minimal 32 byte",
+		)
 	}
+
+	// =================================================
+	// DATABASE
+	// =================================================
 
 	db, err := database.Open(os.Getenv("DATABASE_URL"))
 	if err != nil {
@@ -226,11 +303,14 @@ func run() error {
 
 	conn, err := db.DB()
 	if err != nil {
-		return err
+		return fmt.Errorf("akses koneksi database: %w", err)
 	}
 	defer conn.Close()
 
-	// Migrasi tabel secara bertahap.
+	// =================================================
+	// DATABASE MIGRATIONS
+	// =================================================
+
 	migrations := []struct {
 		name  string
 		model interface{}
@@ -245,15 +325,12 @@ func run() error {
 	}
 
 	for _, migration := range migrations {
-		log.Printf("Memulai migrasi model: %s", migration.name)
+		log.Printf(
+			"Memulai migrasi model: %s",
+			migration.name,
+		)
 
 		if err := db.AutoMigrate(migration.model); err != nil {
-			log.Printf(
-				"Detail error migrasi %s: %v",
-				migration.name,
-				err,
-			)
-
 			return fmt.Errorf(
 				"migrasi model %s gagal: %w",
 				migration.name,
@@ -261,8 +338,21 @@ func run() error {
 			)
 		}
 
-		log.Printf("Migrasi model %s berhasil", migration.name)
+		log.Printf(
+			"Migrasi model %s berhasil",
+			migration.name,
+		)
 	}
+
+	// =================================================
+	// GIN ENGINE
+	// =================================================
+
+	router := setupEngine(db, secret)
+
+	// =================================================
+	// SERVER CONFIGURATION
+	// =================================================
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -270,17 +360,31 @@ func run() error {
 	}
 
 	server := &http.Server{
-		Addr:              ":" + port,
-		Handler:           setupEngine(db, secret),
+		Addr:              "0.0.0.0:" + port,
+		Handler:           router,
 		ReadHeaderTimeout: 5 * time.Second,
-		ReadTimeout:       10 * time.Second,
-		WriteTimeout:      10 * time.Second,
-		IdleTimeout:       60 * time.Second,
+		ReadTimeout:       30 * time.Second,
+
+		// Beri waktu untuk analisis Python yang mungkin
+		// memerlukan waktu lebih lama.
+		WriteTimeout: 2 * time.Minute,
+
+		IdleTimeout: 60 * time.Second,
 	}
 
-	log.Printf("Server berjalan di http://localhost:%s", port)
-	return server.ListenAndServe()
+	log.Printf("Server berjalan pada port %s", port)
+
+	if err := server.ListenAndServe(); err != nil &&
+		!errors.Is(err, http.ErrServerClosed) {
+		return fmt.Errorf("server gagal berjalan: %w", err)
+	}
+
+	return nil
 }
+
+// =====================================================
+// MAIN
+// =====================================================
 
 func main() {
 	if err := run(); err != nil {

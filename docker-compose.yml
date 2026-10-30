@@ -1,0 +1,25 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kelompok3-management-system
+    ports:
+      - "${PORT:-8080}:8080"
+    env_file:
+      - .env
+    environment:
+      # Pastikan environment variable ini menimpa konfigurasi lokal Windows jika ada di .env
+      PORT: "8080"
+      GIN_MODE: "release"
+      TEXT_ANALYSIS_PYTHON: "python3"
+      TEXT_ANALYSIS_SCRIPT: "internal/textanalysis/analyze_text.py"
+    volumes:
+      # Mount folder uploads agar file keluhan/aset tetap tersimpan di host machine
+      - ./uploads:/app/uploads
+      # Persistensi data histori aktivitas dashboard jika diperlukan
+      - dashboard_activities:/app/internal/dashboard
+    restart: unless-stopped
+
+volumes:
+  dashboard_activities:
