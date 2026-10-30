@@ -1,9 +1,20 @@
 (function () {
-    const isLocalDev = window.location.hostname === "localhost" && window.location.port === "8081";
-    const defaultApiUrl = isLocalDev ? "http://localhost:8080" : window.location.origin;
+    const hostname = window.location.hostname;
+    const port = window.location.port;
+
+    const isLocalDev =
+        hostname === "localhost" && port === "8081";
+
+    const isProduction =
+        !isLocalDev;
+
+    const API_URL = isLocalDev
+        ? "http://localhost:8080"
+        : "https://stockwise-api.domain-kamu.com";
 
     window.APP_CONFIG = {
-        API_BASE_URL: defaultApiUrl,
+        API_BASE_URL: API_URL,
         BASIC_URL: window.location.origin,
     };
+
 })();
