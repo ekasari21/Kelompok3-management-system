@@ -185,3 +185,12 @@ func (s *Service) Delete(id string) error {
 func IsNotFound(err error) bool {
 	return errors.Is(err, gorm.ErrRecordNotFound)
 }
+
+func (s *Service) MarkAsUnrepairable(id string, note string) (*Complaint, error) {
+	uid, err := uuid.Parse(id)
+	if err != nil {
+		return nil, errors.New("format UUID tidak valid")
+	}
+
+	return s.repository.MarkAsUnrepairable(uid, note)
+}

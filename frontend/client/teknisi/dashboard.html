@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Dashboard Admin - Inventaris Cerdas</title>
+    <title>Dashboard Teknisi - Inventaris Cerdas</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -294,71 +294,8 @@
 
 <body>
 
-<!-- SIDEBAR: MENU SELALU VERTIKAL -->
-<aside class="sidebar">
-    <div class="brand">
-        <div class="brand-icon">
-            <i class="bi bi-box-seam"></i>
-        </div>
-        <div class="brand-text">
-            <div>Inventaris Cerdas</div>
-            <small class="text-white-50 fw-normal">Teknisi Panel</small>
-        </div>
-    </div>
-
-    <div class="menu-title">Menu Utama</div>
-
-    <nav>
-        <a href="dashboard-admin.html" class="nav-link active">
-            <i class="bi bi-grid-1x2-fill"></i>
-            <span class="nav-text">Dashboard</span>
-        </a>
-
-        <a href="aset.html" class="nav-link">
-            <i class="bi bi-box-seam"></i>
-            <span class="nav-text">Kelola Aset</span>
-        </a>
-
-        <a href="kategori.html" class="nav-link">
-            <i class="bi bi-tags"></i>
-            <span class="nav-text">Kategori Aset</span>
-        </a>
-
-        <a href="keluhan.html" class="nav-link">
-            <i class="bi bi-chat-left-text"></i>
-            <span class="nav-text">Keluhan</span>
-        </a>
-
-        <a href="peminjaman.html" class="nav-link">
-            <i class="bi bi-arrow-left-right"></i>
-            <span class="nav-text">Peminjaman Aset</span>
-        </a>
-    </nav>
-
-    <div class="menu-title">Administrasi</div>
-
-    <nav>
-        <a href="pengguna.html" class="nav-link">
-            <i class="bi bi-people"></i>
-            <span class="nav-text">Manajemen Pengguna</span>
-        </a>
-
-        <a href="laporan.html" class="nav-link">
-            <i class="bi bi-file-earmark-bar-graph"></i>
-            <span class="nav-text">Laporan</span>
-        </a>
-
-        <a href="pengaturan.html" class="nav-link">
-            <i class="bi bi-gear"></i>
-            <span class="nav-text">Pengaturan</span>
-        </a>
-
-        <a href="#" id="logoutButton" class="nav-link logout">
-            <i class="bi bi-box-arrow-left"></i>
-            <span class="nav-text">Logout</span>
-        </a>
-    </nav>
-</aside>
+<!-- SIDEBAR: DIMUAT OTOMATIS OLEH LAYOUT.JS SESUAI ROLE TEKNISI -->
+<div id="sidebar-container"></div>
 
 <!-- DASHBOARD -->
 <main class="main-content">
@@ -536,9 +473,9 @@
                     <strong>20</strong>
                 </div>
 
-                <a href="laporan.html" class="btn btn-outline-primary w-100">
-                    <i class="bi bi-file-earmark-text me-2"></i>
-                    Lihat Laporan
+                <a href="complaints.html" class="btn btn-outline-primary w-100">
+                    <i class="bi bi-chat-left-text me-2"></i>
+                    Kelola Keluhan Aset
                 </a>
             </div>
         </div>
@@ -589,27 +526,15 @@
             <div class="content-card">
                 <h2 class="section-title">Akses Cepat</h2>
 
-                <a href="aset.html" class="quick-link">
-                    <i class="bi bi-plus-square"></i>
-                    <span>Tambah Aset Baru</span>
+                <a href="complaints.html" class="quick-link">
+                    <i class="bi bi-chat-left-text text-primary"></i>
+                    <span>Kelola Keluhan Aset</span>
                     <i class="bi bi-chevron-right"></i>
                 </a>
 
-                <a href="keluhan.html" class="quick-link">
-                    <i class="bi bi-tools"></i>
-                    <span>Kelola Keluhan</span>
-                    <i class="bi bi-chevron-right"></i>
-                </a>
-
-                <a href="peminjaman.html" class="quick-link">
-                    <i class="bi bi-arrow-left-right"></i>
-                    <span>Kelola Peminjaman</span>
-                    <i class="bi bi-chevron-right"></i>
-                </a>
-
-                <a href="pengguna.html" class="quick-link">
-                    <i class="bi bi-people"></i>
-                    <span>Manajemen Pengguna</span>
+                <a href="../user/chatbot.html" class="quick-link">
+                    <i class="bi bi-chat-dots text-info"></i>
+                    <span>Tanya Asisten Inventaris (AI)</span>
                     <i class="bi bi-chevron-right"></i>
                 </a>
             </div>
@@ -622,69 +547,10 @@
 
 </main>
 
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-document.getElementById("logoutButton").addEventListener("click", async function (event) {
-    event.preventDefault();
-
-    const button = this;
-    button.style.pointerEvents = "none";
-
-    try {
-        const logoutUrl = (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || (window.location.hostname === "localhost" && window.location.port === "8081" ? "http://localhost:8080/api/auth/logout" : `${window.location.origin}/api/auth/logout`);
-        const response = await fetch(logoutUrl, {
-            method: "POST",
-            credentials: "include"
-        });
-
-        if (!response.ok) {
-            console.error("Logout gagal:", await response.text());
-        }
-    } catch (error) {
-        console.error("Gagal menghubungi server logout:", error);
-    } finally {
-        window.location.replace("/login.html");
-    }
-});
-
-(async function checkLogin() {
-    const isLocalDev = window.location.hostname === "localhost" && window.location.port === "8081";
-    const API_URL = (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || (isLocalDev ? "http://localhost:8080" : window.location.origin);
-    const LOGIN_URL = "/login.html";
-
-    try {
-        const response = await fetch(`${API_URL}/api/me`, {
-            method: "GET",
-            credentials: "include",
-            cache: "no-store"
-        });
-
-        // Belum login atau sesi tidak valid.
-        if (!response.ok) {
-            window.location.replace(LOGIN_URL);
-            return;
-        }
-
-        // Pastikan respons bisa dibaca.
-        const result = await response.json();
-        const user = result.data || result.user;
-
-        if (!user || !user.role) {
-            window.location.replace(LOGIN_URL);
-            return;
-        }
-
-        // Opsional: simpan data pengguna untuk digunakan halaman.
-        window.currentUser = user;
-
-    } catch (error) {
-        console.error("Gagal memeriksa autentikasi:", error);
-
-        // Jika server tidak bisa diverifikasi, jangan izinkan
-        // halaman tetap terbuka.
-        window.location.replace(LOGIN_URL);
-    }
-})();
-</script>
+<script src="../config.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/layout.js"></script>
 </body>
 </html>

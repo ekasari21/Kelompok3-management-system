@@ -38,6 +38,18 @@ func RegisterRoutes(router *gin.RouterGroup, h *Handler) {
 			middleware.MockEndpoint("private.complaint.delete"),
 			h.Delete,
 		)
+
+		// Endpoint khusus teknisi/admin untuk menandai aset rusak tidak bisa diperbaiki
+		complaints.POST(
+			"/:id/mark-unrepairable",
+			middleware.MockEndpoint("private.complaint.markUnrepairable"),
+			h.MarkUnrepairable,
+		)
+		complaints.PUT(
+			"/:id/mark-unrepairable",
+			middleware.MockEndpoint("private.complaint.markUnrepairable"),
+			h.MarkUnrepairable,
+		)
 	}
 
 	// Endpoint mengambil keluhan berdasarkan User ID

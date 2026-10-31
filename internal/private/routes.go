@@ -6,6 +6,7 @@ import (
 	"gin-auth/internal/asset"
 	"gin-auth/internal/assetbroken"
 	"gin-auth/internal/assetlending"
+	"gin-auth/internal/auth"
 	"gin-auth/internal/category"
 	"gin-auth/internal/chatbot"
 	"gin-auth/internal/complaint"
@@ -35,20 +36,33 @@ func RegisterRoutes(
 	group := r.Group("/api/private")
 	group.Use(requireAuth)
 
+	// Keluhan (Admin, Teknisi, User terfilter)
+	complaint.RegisterRoutes(group, complaintHandler)
+
+	// Peminjaman (Admin dan User; Teknisi dicegah di handler)
+	assetlending.RegisterRoutes(group, assetLendingHandler)
+
+	// Chatbot dan Dashboard
+	chatbot.RegisterRoutes(group, chatbotHandler)
+	dashboard.RegisterRoutes(group, dashboardHandler)
+
+	// Aset (GET terbuka, modifikasi hanya admin)
+	asset.RegisterRoutes(group, assetHandler)
+
+	// Master data Kategori & Lokasi (GET terbuka, modifikasi hanya admin)
 	category.RegisterRoutes(group, categoryHandler)
 	location.RegisterRoutes(group, locationHandler)
-	asset.RegisterRoutes(group, assetHandler)
-	dashboard.RegisterRoutes(group, dashboardHandler)
-	complaint.RegisterRoutes(group, complaintHandler)
-	assetbroken.RegisterRoutes(group, assetBrokenHandler)
-	assetlending.RegisterRoutes(group, assetLendingHandler)
-	user.RegisterRoutes(group, userHandler)
 
-	// Endpoint analisis teks keluhan dan kerusakan.
-	textanalysis.RegisterRoutes(group, textAnalysisHandler)
+	// Fitur Khusus Admin & Teknisi
+	assetbrokenGroup := group.Group("", auth.RequireRoles("admin", "teknisi"))
+	assetbroken.RegisterRoutes(assetbrokenGroup, assetBrokenHandler)
 
-	// Endpoint asisten AI chatbot khusus data inventaris.
-	chatbot.RegisterRoutes(group, chatbotHandler)
+	textAnalysisGroup := group.Group("", auth.RequireRoles("admin", "teknisi"))
+	textanalysis.RegisterRoutes(textAnalysisGroup, textAnalysisHandler)
+
+	// Manajemen User Khusus Admin
+	userGroup := group.Group("", auth.RequireRole("admin"))
+	user.RegisterRoutes(userGroup, userHandler)
 
 	group.GET(
 		"/profile",

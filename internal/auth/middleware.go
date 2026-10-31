@@ -86,3 +86,36 @@ func RequireRole(allowedRole string) gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+// RequireRoles hanya melanjutkan request jika role user termasuk dalam allowedRoles.
+func RequireRoles(allowedRoles ...string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		value, exists := c.Get("user")
+		if !exists {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "Silakan login terlebih dahulu",
+			})
+			return
+		}
+
+		user, ok := value.(User)
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "Data autentikasi tidak valid",
+			})
+			return
+		}
+
+		userRole := strings.ToLower(strings.TrimSpace(user.Role))
+		for _, r := range allowedRoles {
+			if strings.EqualFold(userRole, strings.ToLower(strings.TrimSpace(r))) {
+				c.Next()
+				return
+			}
+		}
+
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+			"error": "Anda tidak memiliki akses ke fitur ini",
+		})
+	}
+}

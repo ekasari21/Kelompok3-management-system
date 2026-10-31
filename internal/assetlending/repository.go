@@ -113,3 +113,12 @@ func (r *Repository) Delete(ctx context.Context, tx *gorm.DB, id uint) error {
 	}
 	return nil
 }
+
+func (r *Repository) ListByUserID(ctx context.Context, userID uint) ([]LendingAsset, error) {
+	var items []LendingAsset
+	err := r.queryWithRelations(ctx, r.db).
+		Where("user_id = ?", userID).
+		Order("lending_id DESC").
+		Find(&items).Error
+	return items, err
+}

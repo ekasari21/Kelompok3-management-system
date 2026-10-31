@@ -33,20 +33,29 @@ func NewService(repo *Repository, assetRepo *asset.Repository, authRepo *auth.Re
 }
 
 type CreateLendingInput struct {
-	UserID      uint       `json:"user_id" binding:"required,gt=0"`
-	AssetID     uint       `json:"asset_id" binding:"required,gt=0"`
-	QtyLending  int        `json:"qty_lending" binding:"required,gt=0"`
-	LendingDate *time.Time `json:"lending_date"`
-	Status      string     `json:"lending_status"`
+	UserID         uint       `json:"user_id"`
+	UserIDAlt      uint       `json:"userID"`
+	AssetID        uint       `json:"asset_id"`
+	AssetIDAlt     uint       `json:"assetID"`
+	QtyLending     int        `json:"qty_lending"`
+	LendingDate    *time.Time `json:"lending_date"`
+	TanggalPinjam  string     `json:"tanggalPinjam"`
+	TanggalKembali string     `json:"tanggalKembali"`
+	Tujuan         string     `json:"tujuan"`
+	Status         string     `json:"lending_status"`
 }
 
 type UpdateLendingInput struct {
-	UserID      uint       `json:"user_id" binding:"required,gt=0"`
-	AssetID     uint       `json:"asset_id" binding:"required,gt=0"`
-	QtyLending  int        `json:"qty_lending" binding:"required,gt=0"`
-	LendingDate time.Time  `json:"lending_date" binding:"required"`
-	ReturnDate  *time.Time `json:"lending_return"`
-	Status      string     `json:"lending_status" binding:"required"`
+	UserID         uint       `json:"user_id"`
+	UserIDAlt      uint       `json:"userID"`
+	AssetID        uint       `json:"asset_id"`
+	AssetIDAlt     uint       `json:"assetID"`
+	QtyLending     int        `json:"qty_lending"`
+	LendingDate    time.Time  `json:"lending_date"`
+	TanggalPinjam  string     `json:"tanggalPinjam"`
+	ReturnDate     *time.Time `json:"lending_return"`
+	TanggalKembali string     `json:"tanggalKembali"`
+	Status         string     `json:"lending_status"`
 }
 
 type ReturnLendingInput struct {
@@ -95,7 +104,21 @@ func (s *Service) getAsset(ctx context.Context, id uint) (*asset.Asset, error) {
 }
 
 func (s *Service) Create(ctx context.Context, input CreateLendingInput) (*LendingAsset, error) {
-	if input.UserID == 0 || input.AssetID == 0 || input.QtyLending <= 0 {
+	if input.AssetID == 0 && input.AssetIDAlt > 0 {
+		input.AssetID = input.AssetIDAlt
+	}
+	if input.UserID == 0 && input.UserIDAlt > 0 {
+		input.UserID = input.UserIDAlt
+	}
+	if input.QtyLending <= 0 {
+		input.QtyLending = 1
+	}
+	if (input.LendingDate == nil || input.LendingDate.IsZero()) && input.TanggalPinjam != "" {
+		if t, err := time.Parse("2006-01-02", input.TanggalPinjam); err == nil {
+			input.LendingDate = &t
+		}
+	}
+	if input.UserID == 0 || input.AssetID == 0 {
 		return nil, ErrInvalidInput
 	}
 	status, err := normalizeStatus(input.Status, false)
@@ -265,4 +288,11 @@ func (s *Service) Delete(ctx context.Context, id uint) error {
 		}
 		return s.repo.Delete(ctx, tx, id)
 	})
+}
+
+func (s *Service) ListByUserID(ctx context.Context, userID uint) ([]LendingAsset, error) {
+	if userID == 0 {
+		return nil, ErrInvalidInput
+	}
+	return s.repo.ListByUserID(ctx, userID)
 }

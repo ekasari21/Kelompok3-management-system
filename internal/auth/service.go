@@ -170,6 +170,14 @@ func (s *Service) Authenticate(
 		return User{}, ErrInvalidToken
 	}
 
+	if s.repo == nil || s.repo.db == nil {
+		return User{
+			ID:    uint(id),
+			Email: claims.Email,
+			Role:  claims.Role,
+		}, nil
+	}
+
 	user, err := s.repo.GetByID(ctx, uint(id))
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return User{}, ErrInvalidToken

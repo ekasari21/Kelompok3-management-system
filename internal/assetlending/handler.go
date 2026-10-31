@@ -2,6 +2,8 @@ package assetlending
 
 import (
 	"errors"
+	"strings"
+	"gin-auth/internal/auth"
 	"fmt"
 	"gin-auth/internal/dashboard"
 	"log"
@@ -55,6 +57,20 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
+	currentUser, hasUser := getContextUser(c)
+	if hasUser {
+		role := strings.ToLower(strings.TrimSpace(currentUser.Role))
+		if role == "teknisi" {
+			c.JSON(http.StatusForbidden, gin.H{
+				"error": "Akses ditolak: Teknisi tidak memiliki akses pengajuan peminjaman",
+			})
+			return
+		}
+		if role == "user" || input.UserID == 0 {
+			input.UserID = currentUser.ID
+		}
+	}
+
 	item, err := h.service.Create(c.Request.Context(), input)
 	if err != nil {
 		h.handleError(c, err)
@@ -84,6 +100,27 @@ func (h *Handler) Create(c *gin.Context) {
 }
 
 func (h *Handler) List(c *gin.Context) {
+	currentUser, hasUser := getContextUser(c)
+	if hasUser {
+		role := strings.ToLower(strings.TrimSpace(currentUser.Role))
+		if role == "teknisi" {
+			c.JSON(http.StatusForbidden, gin.H{
+				"error": "Akses ditolak: Teknisi tidak memiliki akses data peminjaman aset",
+			})
+			return
+		}
+		// Role USER HANYA boleh melihat data pinjaman diri sendiri
+		if role == "user" {
+			items, err := h.service.ListByUserID(c.Request.Context(), currentUser.ID)
+			if err != nil {
+				h.handleError(c, err)
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"data": items})
+			return
+		}
+	}
+
 	items, err := h.service.List(c.Request.Context())
 	if err != nil {
 		h.handleError(c, err)
@@ -103,6 +140,24 @@ func (h *Handler) GetByID(c *gin.Context) {
 		h.handleError(c, err)
 		return
 	}
+	if item == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Data peminjaman tidak ditemukan"})
+		return
+	}
+
+	currentUser, hasUser := getContextUser(c)
+	if hasUser {
+		role := strings.ToLower(strings.TrimSpace(currentUser.Role))
+		if role == "teknisi" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Akses ditolak"})
+			return
+		}
+		if role == "user" && item.UserID != currentUser.ID {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Anda hanya dapat melihat data peminjaman milik sendiri"})
+			return
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{"data": item})
 }
 
@@ -111,6 +166,26 @@ func (h *Handler) ReturnAsset(c *gin.Context) {
 	if err != nil {
 		h.handleError(c, err)
 		return
+	}
+
+	currentUser, hasUser := getContextUser(c)
+	if hasUser {
+		role := strings.ToLower(strings.TrimSpace(currentUser.Role))
+		if role == "teknisi" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Akses ditolak"})
+			return
+		}
+		if role == "user" {
+			existing, err := h.service.GetByID(c.Request.Context(), id)
+			if err != nil {
+				h.handleError(c, err)
+				return
+			}
+			if existing != nil && existing.UserID != currentUser.ID {
+				c.JSON(http.StatusForbidden, gin.H{"error": "Anda hanya dapat mengembalikan peminjaman milik sendiri"})
+				return
+			}
+		}
 	}
 
 	var input ReturnLendingInput
@@ -171,6 +246,27 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
+	currentUser, hasUser := getContextUser(c)
+	if hasUser {
+		role := strings.ToLower(strings.TrimSpace(currentUser.Role))
+		if role == "teknisi" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Akses ditolak"})
+			return
+		}
+		if role == "user" {
+			existing, err := h.service.GetByID(c.Request.Context(), id)
+			if err != nil {
+				h.handleError(c, err)
+				return
+			}
+			if existing != nil && existing.UserID != currentUser.ID {
+				c.JSON(http.StatusForbidden, gin.H{"error": "Anda hanya dapat mengubah data peminjaman milik sendiri"})
+				return
+			}
+			input.UserID = currentUser.ID
+		}
+	}
+
 	item, err := h.service.Update(c.Request.Context(), id, input)
 	if err != nil {
 		h.handleError(c, err)
@@ -205,9 +301,38 @@ func (h *Handler) Delete(c *gin.Context) {
 		h.handleError(c, err)
 		return
 	}
+
+	currentUser, hasUser := getContextUser(c)
+	if hasUser {
+		role := strings.ToLower(strings.TrimSpace(currentUser.Role))
+		if role == "teknisi" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Akses ditolak"})
+			return
+		}
+		if role == "user" {
+			existing, err := h.service.GetByID(c.Request.Context(), id)
+			if err != nil {
+				h.handleError(c, err)
+				return
+			}
+			if existing != nil && existing.UserID != currentUser.ID {
+				c.JSON(http.StatusForbidden, gin.H{"error": "Anda hanya dapat membatalkan peminjaman milik sendiri"})
+				return
+			}
+		}
+	}
 	if err := h.service.Delete(c.Request.Context(), id); err != nil {
 		h.handleError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Data peminjaman berhasil dihapus"})
+}
+
+func getContextUser(c *gin.Context) (auth.User, bool) {
+	val, exists := c.Get("user")
+	if !exists {
+		return auth.User{}, false
+	}
+	u, ok := val.(auth.User)
+	return u, ok
 }

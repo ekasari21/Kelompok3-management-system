@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kelola Keluhan Aset - Teknisi Panel</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: #f4f7fb;
+            color: #1e293b;
+            font-family: Arial, sans-serif;
+        }
+        .sidebar {
+            position: fixed;
+            inset: 0 auto 0 0;
+            width: 250px;
+            height: 100vh;
+            padding: 24px 15px;
+            background: #102a56;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        .main-content {
+            margin-left: 250px;
+            padding: 28px;
+            min-height: 100vh;
+        }
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .page-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+        }
+        .muted { color: #64748b; font-size: 13px; }
+        .stat-card {
+            background: white;
+            padding: 18px 20px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .stat-number {
+            font-size: 26px;
+            font-weight: bold;
+            margin-top: 6px;
+        }
+        .stat-icon {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-size: 20px;
+        }
+        .card-custom {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+            overflow: hidden;
+        }
+        .table-responsive {
+            border-radius: 8px;
+        }
+        .badge-priority-low { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+        .badge-priority-medium { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+        .badge-priority-high { background: #fed7aa; color: #c2410c; border: 1px solid #fdba74; }
+        .badge-priority-critical { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+        
+        .badge-status-unrepairable {
+            background: #991b1b;
+            color: #ffffff;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { width: 72px; padding: 20px 8px; }
+            .main-content { margin-left: 72px; padding: 16px 12px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar-container"></div>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div>
+                <h1 class="page-title"><i class="bi bi-tools text-primary me-2"></i>Kelola Keluhan Aset (Teknisi)</h1>
+                <div class="muted">Tindak lanjuti komplain fasilitas, perbarui status perbaikan, atau tandai aset rusak permanen</div>
+            </div>
+            <div>
+                <button type="button" class="btn btn-primary d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalTambahKeluhan">
+                    <i class="bi bi-plus-lg"></i> Tambah Keluhan
+                </button>
+            </div>
+        </header>
+
+        <!-- STATISTIK RINGKASAN -->
+        <section class="row g-3 mb-4">
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="muted">Total Keluhan</span>
+                        <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-chat-left-text"></i></div>
+                    </div>
+                    <div class="stat-number" id="statTotal">0</div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="muted">Perlu Ditangani</span>
+                        <div class="stat-icon bg-warning-subtle text-warning"><i class="bi bi-exclamation-triangle"></i></div>
+                    </div>
+                    <div class="stat-number" id="statPending">0</div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="muted">Selesai Diperbaiki</span>
+                        <div class="stat-icon bg-success-subtle text-success"><i class="bi bi-check2-circle"></i></div>
+                    </div>
+                    <div class="stat-number" id="statResolved">0</div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="muted">Rusak Tidak Bisa Diperbaiki</span>
+                        <div class="stat-icon bg-danger-subtle text-danger"><i class="bi bi-x-octagon"></i></div>
+                    </div>
+                    <div class="stat-number text-danger" id="statUnrepairable">0</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FILTER & TABEL KELUHAN -->
+        <div class="card-custom p-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+                <div class="d-flex gap-2 flex-wrap align-items-center">
+                    <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Cari kode, aset, atau pelapor..." style="width: 250px;">
+                    <select id="filterStatus" class="form-select form-select-sm" style="width: 180px;">
+                        <option value="">Semua Status</option>
+                        <option value="pending">Menunggu / Low</option>
+                        <option value="in_progress">Sedang Diproses</option>
+                        <option value="resolved">Selesai Diperbaiki</option>
+                        <option value="unrepairable">Rusak Tidak Bisa Diperbaiki</option>
+                    </select>
+                    <button id="btnRefresh" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+                <div class="text-muted small">
+                    Menampilkan <span id="complaintCount" class="fw-bold">0</span> keluhan
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light text-secondary small">
+                        <tr>
+                            <th>KODE & TANGGAL</th>
+                            <th>PELAPOR</th>
+                            <th>ASET TERKAIT</th>
+                            <th>JUDUL & KENDALA</th>
+                            <th>PRIORITAS</th>
+                            <th>STATUS</th>
+                            <th>FOTO</th>
+                            <th class="text-center">AKSI TEKNISI</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableComplaintBody">
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-muted">
+                                <div class="spinner-border spinner-border-sm text-primary me-2"></div> Memuat data keluhan...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <footer class="text-center text-muted small mt-4">
+            &copy; 2026 Sistem Manajemen Inventaris & Aset (Teknisi Panel)
+        </footer>
+    </main>
+
+    <!-- MODAL TAMBAH KELUHAN (TEKNISI) -->
+    <div class="modal fade" id="modalTambahKeluhan" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <form id="formTambahKeluhan" enctype="multipart/form-data">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle text-primary me-2"></i>Tambah Laporan Keluhan</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold">Pilih Aset Yang Bermasalah <span class="text-danger">*</span></label>
+                                <select class="form-select" id="addAssetID" name="assetID" required>
+                                    <option value="">Memuat daftar aset...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label fw-semibold">Judul Keluhan <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="title" required placeholder="Contoh: AC Bocor di Ruang Rapat">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Prioritas Urgensi</label>
+                                <select class="form-select" name="priority">
+                                    <option value="0.2">Low (Rendah)</option>
+                                    <option value="0.5" selected>Medium (Sedang)</option>
+                                    <option value="0.8">High (Tinggi)</option>
+                                    <option value="1.0">Critical (Kritis)</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Deskripsi Kendala Kerusakan <span class="text-danger">*</span></label>
+                                <textarea class="form-control" name="description" rows="3" required placeholder="Jelaskan secara rinci kendala fisik atau fungsional yang ditemukan..."></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Unggah Foto Bukti Fisik (Opsional)</label>
+                                <input type="file" class="form-control" name="image" accept="image/*">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" id="btnSimpanTambah" class="btn btn-primary">Simpan Keluhan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL TANGGAPI / EDIT STATUS KELUHAN -->
+    <div class="modal fade" id="modalTanggapiKeluhan" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <form id="formTanggapiKeluhan">
+                    <input type="hidden" id="editComplaintID">
+                    <input type="hidden" id="editUserID">
+                    <input type="hidden" id="editAssetID">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square text-primary me-2"></i>Tanggapi & Perbarui Status Keluhan</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small mb-1">Kode Keluhan</label>
+                                <input type="text" class="form-control bg-light" id="displayCode" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small mb-1">Aset</label>
+                                <input type="text" class="form-control bg-light" id="displayAsset" readonly>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label text-muted small mb-1">Judul Laporan</label>
+                                <input type="text" class="form-control" id="editTitle" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label text-muted small mb-1">Deskripsi Kendala</label>
+                                <textarea class="form-control" id="editDescription" rows="2" required></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Status Penanganan</label>
+                                <select class="form-select" id="editStatus">
+                                    <option value="low">Menunggu (Pending / Low)</option>
+                                    <option value="medium">Sedang Diproses (Medium)</option>
+                                    <option value="high">Sedang Diproses Intensif (High)</option>
+                                    <option value="resolved">Selesai Diperbaiki</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Prioritas</label>
+                                <select class="form-select" id="editPriority">
+                                    <option value="0.2">Low (0.2)</option>
+                                    <option value="0.5">Medium (0.5)</option>
+                                    <option value="0.8">High (0.8)</option>
+                                    <option value="1.0">Critical (1.0)</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check form-switch mt-1">
+                                    <input class="form-check-input" type="checkbox" id="editIsFixed">
+                                    <label class="form-check-label fw-semibold" for="editIsFixed">Tandai keluhan ini telah SELESAI DIPERBAIKI</label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Catatan Tindakan Teknisi</label>
+                                <textarea class="form-control" id="editNote" rows="3" placeholder="Catat tindakan perbaikan, penggantian sparepart, atau hasil observasi teknis..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                        <button type="submit" id="btnSimpanUpdate" class="btn btn-primary">Simpan Penanganan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DETAIL FOTO & DATA LENGKAP -->
+    <div class="modal fade" id="modalDetailKeluhan" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-info-circle text-primary me-2"></i>Detail Keluhan Lengkap</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4" id="modalDetailContent">
+                    <!-- Dinamis terisi melalui JS -->
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT LIBRARY -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- SCRIPT APLIKASI -->
+    <script src="../config.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/layout.js"></script>
+
+    <!-- LOGIKA CRUD TEKNISI & TANDAI RUSAK TIDAK BISA DIPERBAIKI -->
+    <script>
+        const API_BASE = (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || window.location.origin;
+        let complaintsData = [];
+        let assetsCache = [];
+
+        // Escape HTML
+        function escapeHtml(text) {
+            return String(text || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        // Format tanggal Indonesia
+        function formatTanggal(raw) {
+            if (!raw) return "-";
+            const d = new Date(raw);
+            if (isNaN(d.getTime())) return raw;
+            return d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+        }
+
+        // Render badge prioritas
+        function renderPriorityBadge(priority) {
+            const p = parseFloat(priority) || 0;
+            if (p >= 0.9) return '<span class="badge badge-priority-critical">Critical</span>';
+            if (p >= 0.7) return '<span class="badge badge-priority-high">High</span>';
+            if (p >= 0.4) return '<span class="badge badge-priority-medium">Medium</span>';
+            return '<span class="badge badge-priority-low">Low</span>';
+        }
+
+        // Render badge status
+        function renderStatusBadge(status, isFixed) {
+            const st = String(status || "").toLowerCase();
+            if (st === "unrepairable" || st === "rusak_berat") {
+                return '<span class="badge badge-status-unrepairable"><i class="bi bi-x-octagon-fill me-1"></i>Rusak Permanen</span>';
+            }
+            if (isFixed || st === "resolved" || st === "selesai") {
+                return '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Selesai</span>';
+            }
+            if (st === "in_progress" || st === "medium" || st === "high") {
+                return '<span class="badge bg-primary"><i class="bi bi-arrow-repeat me-1"></i>Diproses</span>';
+            }
+            return '<span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Menunggu</span>';
+        }
+
+        // Muat daftar keluhan
+        async function loadComplaints() {
+            $("#tableComplaintBody").html(`
+                <tr><td colspan="8" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div> Memuat data keluhan...</td></tr>
+            `);
+
+            try {
+                const res = await fetch(`${API_BASE}/api/private/complaints`, {
+                    credentials: "include",
+                    headers: { "Accept": "application/json" }
+                });
+
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                const data = await res.json();
+                complaintsData = data.data || [];
+                renderTable();
+                updateStats();
+
+            } catch (err) {
+                console.error("Gagal memuat keluhan:", err);
+                $("#tableComplaintBody").html(`
+                    <tr><td colspan="8" class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle me-1"></i> Gagal memuat data keluhan dari server.</td></tr>
+                `);
+            }
+        }
+
+        // Hitung statistik
+        function updateStats() {
+            let total = complaintsData.length;
+            let pending = 0;
+            let resolved = 0;
+            let unrepairable = 0;
+
+            complaintsData.forEach(c => {
+                const st = String(c.status || "").toLowerCase();
+                if (st === "unrepairable" || st === "rusak_berat") {
+                    unrepairable++;
+                } else if (c.is_fixed || st === "resolved") {
+                    resolved++;
+                } else {
+                    pending++;
+                }
+            });
+
+            $("#statTotal").text(total);
+            $("#statPending").text(pending);
+            $("#statResolved").text(resolved);
+            $("#statUnrepairable").text(unrepairable);
+        }
+
+        // Render tabel keluhan
+        function renderTable() {
+            const search = $("#searchInput").val().toLowerCase().trim();
+            const filterSt = $("#filterStatus").val().toLowerCase();
+
+            const filtered = complaintsData.filter(c => {
+                const code = String(c.code || "").toLowerCase();
+                const title = String(c.title || "").toLowerCase();
+                const assetName = String((c.asset && c.asset.nama_asset) || "").toLowerCase();
+                const userName = String((c.user && c.user.name) || "").toLowerCase();
+                const st = String(c.status || "").toLowerCase();
+
+                const matchSearch = !search || code.includes(search) || title.includes(search) || assetName.includes(search) || userName.includes(search);
+
+                let matchStatus = true;
+                if (filterSt === "unrepairable") {
+                    matchStatus = st === "unrepairable" || st === "rusak_berat";
+                } else if (filterSt === "resolved") {
+                    matchStatus = c.is_fixed || st === "resolved";
+                } else if (filterSt === "in_progress") {
+                    matchStatus = st === "in_progress" || st === "medium" || st === "high";
+                } else if (filterSt === "pending") {
+                    matchStatus = st === "pending" || st === "low";
+                }
+
+                return matchSearch && matchStatus;
+            });
+
+            $("#complaintCount").text(filtered.length);
+
+            if (filtered.length === 0) {
+                $("#tableComplaintBody").html(`
+                    <tr><td colspan="8" class="text-center py-4 text-muted">Tidak ada data keluhan yang sesuai kriteria.</td></tr>
+                `);
+                return;
+            }
+
+            let html = "";
+            filtered.forEach((c, idx) => {
+                const assetName = c.asset ? `${escapeHtml(c.asset.nama_asset)} <small class="text-muted">(${escapeHtml(c.asset.code_asset)})</small>` : "Aset tidak terdata";
+                const locationName = (c.asset && c.asset.location && c.asset.location.name) ? `<span class="badge bg-light text-dark border"><i class="bi bi-geo-alt me-1"></i>${escapeHtml(c.asset.location.name)}</span>` : "";
+                const userName = c.user ? escapeHtml(c.user.name) : "User ID: " + c.userID;
+                const isUnrepairable = String(c.status || "").toLowerCase() === "unrepairable";
+
+                let imageThumbnail = '<span class="text-muted small">Tidak ada</span>';
+                if (c.image_path) {
+                    const fullImg = c.image_path.startsWith("http") ? c.image_path : `${API_BASE}/${c.image_path.replace(/^\/+/, "")}`;
+                    imageThumbnail = `<a href="${fullImg}" target="_blank"><img src="${fullImg}" class="rounded border shadow-sm" style="width: 48px; height: 48px; object-fit: cover;"></a>`;
+                }
+
+                html += `
+                    <tr>
+                        <td>
+                            <div class="fw-bold font-monospace text-primary">${escapeHtml(c.code)}</div>
+                            <small class="text-muted">${formatTanggal(c.created_at)}</small>
+                        </td>
+                        <td>
+                            <div class="fw-semibold">${userName}</div>
+                        </td>
+                        <td>
+                            <div>${assetName}</div>
+                            <div class="mt-1">${locationName}</div>
+                        </td>
+                        <td>
+                            <div class="fw-semibold text-truncate" style="max-width: 220px;" title="${escapeHtml(c.title)}">${escapeHtml(c.title)}</div>
+                            <small class="text-muted text-truncate d-block" style="max-width: 220px;">${escapeHtml(c.description)}</small>
+                        </td>
+                        <td>${renderPriorityBadge(c.priority)}</td>
+                        <td>${renderStatusBadge(c.status, c.is_fixed)}</td>
+                        <td>${imageThumbnail}</td>
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-outline-primary" onclick="bukaModalTanggapi('${c.id}')" title="Tanggapi / Perbarui Status">
+                                    <i class="bi bi-pencil-square"></i> Tanggapi
+                                </button>
+                                ${!isUnrepairable ? `
+                                <button type="button" class="btn btn-outline-danger" onclick="tandaiRusakBerat('${c.id}', '${escapeHtml(c.code)}', '${escapeHtml(c.title)}')" title="Ubah status aset menjadi rusak tidak bisa diperbaiki">
+                                    <i class="bi bi-x-octagon-fill"></i> Rusak Berat
+                                </button>
+                                ` : ''}
+                                <button type="button" class="btn btn-outline-secondary" onclick="bukaModalDetail('${c.id}')" title="Lihat Detail">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-danger" onclick="hapusKeluhan('${c.id}', '${escapeHtml(c.code)}')" title="Hapus Keluhan">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            $("#tableComplaintBody").html(html);
+        }
+
+        // FITUR UTAMA TEKNISI: TANDAI ASET RUSAK BERAT TIDAK BISA DIPERBAIKI
+        async function tandaiRusakBerat(id, code, title) {
+            const { value: catatan, isConfirmed } = await Swal.fire({
+                title: 'Tandai Aset Rusak Berat?',
+                html: `
+                    <div class="text-start">
+                        <p class="small text-muted mb-2">Anda akan mengubah aset pada keluhan <strong>${code}</strong> (${title}) menjadi <strong>Rusak Tidak Bisa Diperbaiki (Afkir)</strong>.</p>
+                        <p class="small text-danger mb-3"><i class="bi bi-exclamation-triangle-fill"></i> Tindakan ini otomatis mencatat aset ke tabel Aset Rusak Berat dan mengurangi stok aset aktif inventaris.</p>
+                        <label class="form-label fw-semibold small">Alasan / Catatan Analisis Kerusakan Teknisi:</label>
+                    </div>
+                `,
+                input: 'textarea',
+                inputPlaceholder: 'Contoh: Komponen motherboard terbakar total, tidak tersedia suku cadang resmi, biaya perbaikan melebihi nilai aset...',
+                inputValidator: (val) => {
+                    if (!val || val.trim().length < 5) {
+                        return 'Wajib memberikan catatan alasan teknis minimal 5 karakter!';
+                    }
+                },
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: '<i class="bi bi-x-octagon-fill me-1"></i> Ya, Tandai Rusak Permanen',
+                cancelButtonText: 'Batal'
+            });
+
+            if (!isConfirmed) return;
+
+            Swal.fire({
+                title: 'Sedang memproses...',
+                text: 'Mencatat status aset rusak permanen ke sistem...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            try {
+                const res = await fetch(`${API_BASE}/api/private/complaints/${encodeURIComponent(id)}/mark-unrepairable`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ note: catatan })
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.error || 'Gagal mengubah status aset');
+                }
+
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Status Berhasil Diubah!',
+                    text: 'Aset telah resmi ditandai sebagai RUSAK TIDAK BISA DIPERBAIKI dan dicatat ke data Aset Rusak.',
+                    confirmButtonColor: '#2563eb'
+                });
+
+                loadComplaints();
+
+            } catch (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal Memproses',
+                    text: err.message
+                });
+            }
+        }
+
+        // Buka modal tanggapi / edit
+        function bukaModalTanggapi(id) {
+            const item = complaintsData.find(c => c.id === id);
+            if (!item) return;
+
+            $("#editComplaintID").val(item.id);
+            $("#editUserID").val(item.userID);
+            $("#editAssetID").val(item.assetID);
+            $("#displayCode").val(item.code);
+            $("#displayAsset").val(item.asset ? `${item.asset.nama_asset} (${item.asset.code_asset})` : "Asset ID: " + item.assetID);
+            $("#editTitle").val(item.title);
+            $("#editDescription").val(item.description);
+            $("#editStatus").val(item.status);
+            $("#editPriority").val(item.priority || "0.5");
+            $("#editIsFixed").prop("checked", item.is_fixed || item.status === "resolved");
+            $("#editNote").val(item.note || "");
+
+            const modal = new bootstrap.Modal(document.getElementById("modalTanggapiKeluhan"));
+            modal.show();
+        }
+
+        // Simpan pembaruan status keluhan
+        $("#formTanggapiKeluhan").on("submit", async function (e) {
+            e.preventDefault();
+
+            const id = $("#editComplaintID").val();
+            const payload = {
+                userID: parseInt($("#editUserID").val(), 10),
+                assetID: parseInt($("#editAssetID").val(), 10),
+                title: $("#editTitle").val().trim(),
+                description: $("#editDescription").val().trim(),
+                status: $("#editStatus").val(),
+                priority: parseFloat($("#editPriority").val()) || 0.5,
+                is_fixed: $("#editIsFixed").is(":checked"),
+                note: $("#editNote").val().trim()
+            };
+
+            $("#btnSimpanUpdate").prop("disabled", true).text("Menyimpan...");
+
+            try {
+                const res = await fetch(`${API_BASE}/api/private/complaints/${encodeURIComponent(id)}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    credentials: "include",
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || "Gagal memperbarui keluhan");
+
+                bootstrap.Modal.getInstance(document.getElementById("modalTanggapiKeluhan")).hide();
+                Swal.fire({
+                    icon: "success",
+                    title: "Berhasil Diperbarui",
+                    text: "Status keluhan berhasil diperbarui oleh teknisi.",
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+
+                loadComplaints();
+
+            } catch (err) {
+                Swal.fire({ icon: "error", title: "Gagal Menyimpan", text: err.message });
+            } finally {
+                $("#btnSimpanUpdate").prop("disabled", false).text("Simpan Penanganan");
+            }
+        });
+
+        // Buka modal detail
+        function bukaModalDetail(id) {
+            const item = complaintsData.find(c => c.id === id);
+            if (!item) return;
+
+            const assetName = item.asset ? `${escapeHtml(item.asset.nama_asset)} (${escapeHtml(item.asset.code_asset)})` : "-";
+            const locationName = (item.asset && item.asset.location) ? escapeHtml(item.asset.location.name) : "-";
+            const userName = item.user ? `${escapeHtml(item.user.name)} (${escapeHtml(item.user.email)})` : "User ID: " + item.userID;
+
+            let photoHtml = '<span class="text-muted">Tidak ada foto bukti</span>';
+            if (item.image_path) {
+                const fullImg = item.image_path.startsWith("http") ? item.image_path : `${API_BASE}/${item.image_path.replace(/^\/+/, "")}`;
+                photoHtml = `<a href="${fullImg}" target="_blank"><img src="${fullImg}" class="img-fluid rounded border shadow-sm" style="max-height: 250px;"></a>`;
+            }
+
+            $("#modalDetailContent").html(`
+                <div class="row g-3">
+                    <div class="col-md-6"><div class="p-3 bg-light rounded border"><small class="text-muted d-block">Kode Keluhan</small><span class="fw-bold font-monospace text-primary">${escapeHtml(item.code)}</span></div></div>
+                    <div class="col-md-6"><div class="p-3 bg-light rounded border"><small class="text-muted d-block">Tanggal Pelaporan</small><span>${formatTanggal(item.created_at)}</span></div></div>
+                    <div class="col-md-6"><div class="p-3 bg-light rounded border"><small class="text-muted d-block">Pelapor</small><span class="fw-semibold">${userName}</span></div></div>
+                    <div class="col-md-6"><div class="p-3 bg-light rounded border"><small class="text-muted d-block">Aset & Lokasi</small><span class="fw-semibold">${assetName}</span><br><small class="text-muted">${locationName}</small></div></div>
+                    <div class="col-md-6"><div class="p-3 bg-light rounded border"><small class="text-muted d-block">Prioritas</small>${renderPriorityBadge(item.priority)}</div></div>
+                    <div class="col-md-6"><div class="p-3 bg-light rounded border"><small class="text-muted d-block">Status</small>${renderStatusBadge(item.status, item.is_fixed)}</div></div>
+                    <div class="col-12"><div class="p-3 bg-light rounded border"><small class="text-muted d-block">Judul Keluhan</small><span class="fw-bold">${escapeHtml(item.title)}</span></div></div>
+                    <div class="col-12"><div class="p-3 bg-light rounded border"><small class="text-muted d-block">Deskripsi Kendala</small><div class="text-break mt-1">${escapeHtml(item.description)}</div></div></div>
+                    <div class="col-12"><div class="p-3 bg-light rounded border"><small class="text-muted d-block">Catatan Penanganan Teknisi</small><div class="text-break mt-1 ${item.note ? 'text-primary fw-semibold' : 'text-muted'}">${escapeHtml(item.note || 'Belum ada catatan penanganan')}</div></div></div>
+                    <div class="col-12"><div class="p-3 bg-light rounded border"><small class="text-muted d-block mb-2">Foto Bukti Fisik</small>${photoHtml}</div></div>
+                </div>
+            `);
+
+            const modal = new bootstrap.Modal(document.getElementById("modalDetailKeluhan"));
+            modal.show();
+        }
+
+        // Hapus keluhan
+        async function hapusKeluhan(id, code) {
+            const { isConfirmed } = await Swal.fire({
+                title: 'Hapus Keluhan?',
+                text: `Apakah Anda yakin ingin menghapus keluhan ${code}? Tindakan ini tidak dapat dibatalkan.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Ya, Hapus',
+                cancelButtonText: 'Batal'
+            });
+
+            if (!isConfirmed) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/private/complaints/${encodeURIComponent(id)}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+
+                if (!res.ok) {
+                    const data = await res.json().catch(() => ({}));
+                    throw new Error(data.error || 'Gagal menghapus keluhan');
+                }
+
+                Swal.fire({ icon: 'success', title: 'Terhapus', text: 'Keluhan berhasil dihapus.', timer: 1500, showConfirmButton: false });
+                loadComplaints();
+
+            } catch (err) {
+                Swal.fire({ icon: 'error', title: 'Gagal Menghapus', text: err.message });
+            }
+        }
+
+        // Muat opsi aset untuk modal tambah
+        async function loadAssetsDropdown() {
+            try {
+                const res = await fetch(`${API_BASE}/api/private/assets`, {
+                    credentials: "include"
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    assetsCache = data.data || [];
+                    let options = '<option value="">-- Pilih Aset Terkait --</option>';
+                    assetsCache.forEach(a => {
+                        options += `<option value="${a.asset_id}">${escapeHtml(a.nama_asset)} (${escapeHtml(a.code_asset)}) - Stok: ${a.qty_in}</option>`;
+                    });
+                    $("#addAssetID").html(options);
+                }
+            } catch (e) {
+                console.warn("Gagal memuat daftar aset:", e);
+            }
+        }
+
+        // Submit form tambah keluhan
+        $("#formTambahKeluhan").on("submit", async function (e) {
+            e.preventDefault();
+
+            const formEl = document.getElementById("formTambahKeluhan");
+            const formData = new FormData(formEl);
+
+            // Jika user ID tidak terisi, backend otomatis mengisinya dari sesi teknisi
+            if (!formData.get("userID") && window.currentUser) {
+                formData.set("userID", window.currentUser.id);
+            }
+
+            $("#btnSimpanTambah").prop("disabled", true).text("Menyimpan...");
+
+            try {
+                const res = await fetch(`${API_BASE}/api/private/complaints`, {
+                    method: "POST",
+                    credentials: "include",
+                    body: formData
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || "Gagal membuat keluhan");
+
+                formEl.reset();
+                bootstrap.Modal.getInstance(document.getElementById("modalTambahKeluhan")).hide();
+
+                Swal.fire({ icon: "success", title: "Berhasil", text: "Keluhan baru berhasil dibuat.", timer: 1500, showConfirmButton: false });
+                loadComplaints();
+
+            } catch (err) {
+                Swal.fire({ icon: "error", title: "Gagal Membuat", text: err.message });
+            } finally {
+                $("#btnSimpanTambah").prop("disabled", false).text("Simpan Keluhan");
+            }
+        });
+
+        // Event filter dan search
+        $("#searchInput").on("input", renderTable);
+        $("#filterStatus").on("change", renderTable);
+        $("#btnRefresh").on("click", loadComplaints);
+
+        // Inisialisasi awal
+        $(document).ready(function () {
+            loadComplaints();
+            loadAssetsDropdown();
+        });
+    </script>
+</body>
+</html>
