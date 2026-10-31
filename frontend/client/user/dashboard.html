@@ -3,16 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Dashboard Admin - Inventaris Cerdas</title>
+    <title>Dashboard Pengguna - Inventaris Mandiri</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
 
     <style>
-        * {
-            box-sizing: border-box;
-        }
-
+        * { box-sizing: border-box; }
         body {
             margin: 0;
             background: #f4f7fb;
@@ -20,7 +18,6 @@
             font-family: Arial, sans-serif;
         }
 
-        /* SIDEBAR MENU VERTIKAL */
         .sidebar {
             position: fixed;
             inset: 0 auto 0 0;
@@ -32,82 +29,6 @@
             z-index: 1000;
         }
 
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 0 10px 28px;
-            color: white;
-            font-size: 17px;
-            font-weight: bold;
-        }
-
-        .brand-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 42px;
-            height: 42px;
-            border-radius: 10px;
-            background: #2563eb;
-            font-size: 23px;
-        }
-
-        .menu-title {
-            padding: 14px 12px 10px;
-            color: #94a3b8;
-            font-size: 10px;
-            font-weight: bold;
-            letter-spacing: 1.2px;
-            text-transform: uppercase;
-        }
-
-        /* Memastikan setiap menu berada pada baris tersendiri */
-        .sidebar nav {
-            display: flex;
-            flex-direction: column;
-            align-items: stretch;
-            gap: 5px;
-            width: 100%;
-        }
-
-        .sidebar .nav-link {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            justify-content: flex-start;
-            gap: 12px;
-            width: 100%;
-            min-height: 45px;
-            padding: 12px 14px;
-            border-radius: 8px;
-            color: #cbd5e1;
-            text-decoration: none;
-            white-space: nowrap;
-            font-size: 13px;
-        }
-
-        .sidebar .nav-link i {
-            width: 21px;
-            flex-shrink: 0;
-            text-align: center;
-            font-size: 18px;
-        }
-
-        .sidebar .nav-link:hover,
-        .sidebar .nav-link.active {
-            background: #2563eb;
-            color: white;
-        }
-
-        .sidebar .logout {
-            margin-top: 20px;
-            border-top: 1px solid #334969;
-            border-radius: 0;
-            padding-top: 20px;
-        }
-
-        /* KONTEN UTAMA */
         .main-content {
             margin-left: 250px;
             min-height: 100vh;
@@ -119,12 +40,13 @@
             justify-content: space-between;
             align-items: center;
             gap: 16px;
-            margin-bottom: 28px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
         }
 
         .page-title {
-            margin-bottom: 7px;
-            font-size: 25px;
+            margin-bottom: 4px;
+            font-size: 24px;
             font-weight: bold;
         }
 
@@ -133,436 +55,301 @@
             font-size: 13px;
         }
 
-        .stat-card, .content-card {
-            height: 100%;
-            padding: 22px;
+        .stat-card {
             background: white;
-            border: 1px solid #e9eef5;
-            border-radius: 13px;
-            box-shadow: 0 3px 12px rgba(15, 23, 42, .03);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
         .stat-icon {
+            width: 44px;
+            height: 44px;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 45px;
-            height: 45px;
-            border-radius: 11px;
-            font-size: 22px;
+            border-radius: 10px;
+            font-size: 20px;
         }
 
         .stat-number {
-            margin: 17px 0 5px;
-            font-size: 30px;
+            font-size: 28px;
             font-weight: bold;
+            margin-top: 10px;
+            margin-bottom: 2px;
         }
 
-        .section-title {
-            margin-bottom: 18px;
+        .welcome-banner {
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+            color: white;
+            padding: 24px 28px;
+            border-radius: 14px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.15);
+        }
+
+        .welcome-banner h2 {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .welcome-banner p {
+            color: #e0e7ff;
+            font-size: 14px;
+            margin-bottom: 16px;
+            max-width: 750px;
+        }
+
+        .content-card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .content-card .card-header-custom {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ffffff;
+        }
+
+        .content-card .card-header-custom h3 {
             font-size: 16px;
             font-weight: bold;
+            margin: 0;
+            color: #1e293b;
         }
 
-        .table thead th {
-            padding: 14px;
-            background: #f8fafc;
-            color: #64748b;
-            font-size: 11px;
-            white-space: nowrap;
+        .table-responsive {
+            margin: 0;
         }
 
-        .table tbody td {
-            padding: 15px 14px;
-            font-size: 12px;
+        .table > :not(caption) > * > * {
+            padding: 12px 16px;
             vertical-align: middle;
-        }
-
-        .asset-code {
-            color: #2563eb;
-            font-weight: bold;
-        }
-
-        .status {
-            display: inline-block;
-            padding: 6px 9px;
-            border-radius: 20px;
-            font-size: 10px;
-            font-weight: bold;
-            white-space: nowrap;
-        }
-
-        .good {
-            background: #dcfce7;
-            color: #166534;
-        }
-
-        .warning {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .danger {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .activity {
-            display: flex;
-            gap: 12px;
-            padding: 14px 0;
-            border-bottom: 1px solid #eef2f7;
-        }
-
-        .activity:last-child {
-            border-bottom: 0;
-        }
-
-        .activity-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 38px;
-            height: 38px;
-            flex-shrink: 0;
-            border-radius: 10px;
-        }
-
-        .quick-link {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 13px;
-            margin-bottom: 10px;
-            border: 1px solid #e2e8f0;
-            border-radius: 9px;
-            color: #334155;
-            text-decoration: none;
             font-size: 13px;
         }
 
-        .quick-link:hover {
-            background: #eff6ff;
-        }
-
-        .quick-link .bi-chevron-right {
-            margin-left: auto;
-        }
-
         footer {
-            padding: 24px 0 5px;
-            color: #64748b;
-            font-size: 11px;
+            padding: 30px 0 10px;
+            color: #94a3b8;
+            font-size: 12px;
             text-align: center;
         }
 
         @media (max-width: 768px) {
-            .sidebar {
-                width: 72px;
-                padding: 20px 8px;
-            }
-
-            .brand {
-                justify-content: center;
-                padding: 0 0 25px;
-            }
-
-            .brand-text, .menu-title, .nav-text {
-                display: none;
-            }
-
-            .sidebar .nav-link {
-                justify-content: center;
-                padding: 12px 5px;
-            }
-
-            .main-content {
-                margin-left: 72px;
-                padding: 16px 12px;
-            }
-
-            .page-title {
-                font-size: 20px;
-            }
-
-            .profile-text {
-                display: none;
-            }
+            .sidebar { width: 72px; padding: 20px 8px; }
+            .main-content { margin-left: 72px; padding: 16px 12px; }
+            .page-title { font-size: 20px; }
         }
     </style>
 </head>
-
 <body>
-   <!-- Sidebar diambil dari components/sidebar.html -->
-<div id="sidebar-container"></div>  
 
+    <!-- SIDEBAR: DIMUAT OTOMATIS OLEH LAYOUT.JS SESUAI ROLE USER -->
+    <div id="sidebar-container"></div>
 
-<!-- DASHBOARD -->
-<main class="main-content">
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
 
-    
-    <header class="topbar">
-        <div>
-            <h1 class="page-title">Dashboard User</h1>
-            <div class="muted">Ringkasan Sistem Manajemen Inventaris</div>
-        </div>
-
-        <div class="d-flex align-items-center gap-3">
-            <button class="btn btn-white bg-white border" aria-label="Notifikasi">
-                <i class="bi bi-bell"></i>
-            </button>
-            <div class="d-flex align-items-center gap-2">
-                <div class="rounded-circle bg-primary text-white d-flex
-                            align-items-center justify-content-center"
-                     style="width:40px;height:40px">
-                    <i class="bi bi-person-fill fs-5"></i>
-                </div>
-                <div class="profile-text">
-                    <div class="fw-bold small">USERS</div>
-                    <div class="muted">USERS</div>
-                </div>
+        <!-- TOPBAR -->
+        <header class="topbar">
+            <div>
+                <h1 class="page-title"><i class="bi bi-person-workspace text-primary me-2"></i>Dashboard Pengguna</h1>
+                <div class="muted">Portal Layanan Inventaris Mandiri (Self-Service)</div>
             </div>
-        </div>
-    </header>
 
-    <!-- STATISTIK -->
-    <section class="row g-3 mb-4">
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="stat-card">
-                <div class="d-flex justify-content-between align-items-center">
-                    <span class="muted">Total Aset</span>
-                    <div class="stat-icon bg-primary-subtle text-primary">
-                        <i class="bi bi-box-seam"></i>
-                    </div>
-                </div>
-                <div class="stat-number">248</div>
-                <div class="muted">Seluruh unit inventaris</div>
-            </div>
-        </div>
-
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="stat-card">
-                <div class="d-flex justify-content-between align-items-center">
-                    <span class="muted">Aset Tersedia</span>
-                    <div class="stat-icon bg-success-subtle text-success">
-                        <i class="bi bi-check-circle"></i>
-                    </div>
-                </div>
-                <div class="stat-number">186</div>
-                <div class="muted">Siap digunakan</div>
-            </div>
-        </div>
-
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="stat-card">
-                <div class="d-flex justify-content-between align-items-center">
-                    <span class="muted">Dipinjam</span>
-                    <div class="stat-icon bg-warning-subtle text-warning">
-                        <i class="bi bi-arrow-left-right"></i>
-                    </div>
-                </div>
-                <div class="stat-number">42</div>
-                <div class="muted">Dalam peminjaman</div>
-            </div>
-        </div>
-
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="stat-card">
-                <div class="d-flex justify-content-between align-items-center">
-                    <span class="muted">Perlu Perbaikan</span>
-                    <div class="stat-icon bg-danger-subtle text-danger">
-                        <i class="bi bi-tools"></i>
-                    </div>
-                </div>
-                <div class="stat-number">20</div>
-                <div class="muted">Perlu tindak lanjut</div>
-            </div>
-        </div>
-    </section>
-
-    <!-- NOTIFIKASI -->
-    <div class="alert alert-primary border-0 mb-4">
-        <i class="bi bi-info-circle-fill me-2"></i>
-        <strong>Perhatian Admin!</strong>
-        Ada 3 keluhan baru dan 5 permintaan peminjaman yang menunggu pemeriksaan.
-    </div>
-
-    <!-- TABEL ASET -->
-    <section class="row g-4 mb-4">
-        <div class="col-12 col-xl-8">
-            <div class="content-card p-0">
-                <div class="p-4 d-flex justify-content-between align-items-center">
-                    <div>
-                        <h2 class="section-title mb-1">Inventaris Terbaru</h2>
-                        <div class="muted">Daftar aset terdaftar</div>
-                    </div>
-                    <a href="aset.html" class="btn btn-sm btn-outline-primary">
-                        Lihat Semua
-                    </a>
-                </div>
-
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th>Kode Aset</th>
-                                <th>Nama Aset</th>
-                                <th>Kategori</th>
-                                <th>Kondisi</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="asset-code">AST-LAP-001</td>
-                                <td>Laptop Lenovo</td>
-                                <td>Elektronik</td>
-                                <td><span class="status good">Baik</span></td>
-                                <td>Tersedia</td>
-                            </tr>
-                            <tr>
-                                <td class="asset-code">AST-PRN-002</td>
-                                <td>Printer Epson</td>
-                                <td>Elektronik</td>
-                                <td><span class="status warning">Perlu Servis</span></td>
-                                <td>Dipinjam</td>
-                            </tr>
-                            <tr>
-                                <td class="asset-code">AST-MON-003</td>
-                                <td>Monitor LG</td>
-                                <td>Elektronik</td>
-                                <td><span class="status good">Baik</span></td>
-                                <td>Tersedia</td>
-                            </tr>
-                            <tr>
-                                <td class="asset-code">AST-CHR-004</td>
-                                <td>Kursi Kantor</td>
-                                <td>Furniture</td>
-                                <td><span class="status danger">Rusak</span></td>
-                                <td>Tersedia</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- KONDISI ASET -->
-        <div class="col-12 col-xl-4">
-            <div class="content-card">
-                <h2 class="section-title">Kondisi Inventaris</h2>
-                <div class="muted mb-3">Total 248 unit aset</div>
-
-                <div class="progress mb-4" style="height:10px">
-                    <div class="progress-bar bg-success" style="width:75%"></div>
-                    <div class="progress-bar bg-warning" style="width:17%"></div>
-                    <div class="progress-bar bg-danger" style="width:8%"></div>
-                </div>
-
-                <div class="d-flex justify-content-between mb-3 small">
-                    <span><i class="bi bi-circle-fill text-success me-2"></i>Kondisi baik</span>
-                    <strong>186</strong>
-                </div>
-
-                <div class="d-flex justify-content-between mb-3 small">
-                    <span><i class="bi bi-circle-fill text-warning me-2"></i>Perawatan</span>
-                    <strong>42</strong>
-                </div>
-
-                <div class="d-flex justify-content-between mb-4 small">
-                    <span><i class="bi bi-circle-fill text-danger me-2"></i>Rusak</span>
-                    <strong>20</strong>
-                </div>
-
-                <a href="laporan.html" class="btn btn-outline-primary w-100">
-                    <i class="bi bi-file-earmark-text me-2"></i>
-                    Lihat Laporan
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- AKTIVITAS DAN AKSES CEPAT -->
-    <section class="row g-4">
-        <div class="col-12 col-lg-7">
-            <div class="content-card">
-                <h2 class="section-title">Aktivitas Terbaru</h2>
-
-                <div class="activity">
-                    <div class="activity-icon bg-primary-subtle text-primary">
-                        <i class="bi bi-plus-circle"></i>
+            <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center gap-2 bg-white px-3 py-2 rounded-3 border">
+                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width:36px;height:36px">
+                        <i class="bi bi-person"></i>
                     </div>
                     <div>
-                        <div class="fw-bold small">Aset baru ditambahkan</div>
-                        <div class="muted">Laptop Lenovo - AST-LAP-001</div>
-                        <div class="muted mt-1">09.15 WIB</div>
-                    </div>
-                </div>
-
-                <div class="activity">
-                    <div class="activity-icon bg-warning-subtle text-warning">
-                        <i class="bi bi-tools"></i>
-                    </div>
-                    <div>
-                        <div class="fw-bold small">Keluhan aset baru</div>
-                        <div class="muted">Printer mengalami gangguan</div>
-                        <div class="muted mt-1">10.30 WIB</div>
-                    </div>
-                </div>
-
-                <div class="activity">
-                    <div class="activity-icon bg-success-subtle text-success">
-                        <i class="bi bi-arrow-return-left"></i>
-                    </div>
-                    <div>
-                        <div class="fw-bold small">Pengembalian aset</div>
-                        <div class="muted">Monitor LG telah dikembalikan</div>
-                        <div class="muted mt-1">11.00 WIB</div>
+                        <div class="fw-bold small text-dark" id="topbarUserName">Memuat...</div>
+                        <div class="text-muted" style="font-size: 11px;" id="topbarUserRole">USER</div>
                     </div>
                 </div>
             </div>
-        </div>
+        </header>
 
-        <div class="col-12 col-lg-5">
-            <div class="content-card">
-                <h2 class="section-title">Akses Cepat</h2>
-
-                <a href="aset.html" class="quick-link">
-                    <i class="bi bi-plus-square"></i>
-                    <span>Tambah Aset Baru</span>
-                    <i class="bi bi-chevron-right"></i>
+        <!-- WELCOME BANNER (SELF-SERVICE HERO) -->
+        <div class="welcome-banner">
+            <h2>Selamat Datang, <span id="welcomeUserName">Pengguna</span>!</h2>
+            <p>
+                Kelola kebutuhan operasional Anda secara mandiri di sini. Anda dapat mengajukan peminjaman fasilitas kantor, memeriksa status pengajuan, atau melaporkan kerusakan fasilitas kerja.
+            </p>
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="asset-lending.html" class="btn btn-light text-primary fw-semibold shadow-sm">
+                    <i class="bi bi-box-arrow-up-right me-1"></i> Ajukan Pinjam Aset
                 </a>
-
-                <a href="keluhan.html" class="quick-link">
-                    <i class="bi bi-tools"></i>
-                    <span>Kelola Keluhan</span>
-                    <i class="bi bi-chevron-right"></i>
+                <a href="complaints.html" class="btn btn-outline-light fw-semibold">
+                    <i class="bi bi-chat-left-dots me-1"></i> Lapor Keluhan Fasilitas
                 </a>
-
-                <a href="peminjaman.html" class="quick-link">
-                    <i class="bi bi-arrow-left-right"></i>
-                    <span>Kelola Peminjaman</span>
-                    <i class="bi bi-chevron-right"></i>
-                </a>
-
-                <a href="pengguna.html" class="quick-link">
-                    <i class="bi bi-people"></i>
-                    <span>Manajemen Pengguna</span>
-                    <i class="bi bi-chevron-right"></i>
+                <a href="chatbot.html" class="btn btn-outline-light fw-semibold">
+                    <i class="bi bi-chat-dots-fill me-1"></i> Tanya Asisten Inventaris (AI)
                 </a>
             </div>
         </div>
-    </section>
-    
-    <footer>
-        &copy; 2026 Sistem Manajemen Inventaris Cerdas
-    </footer>
 
-</main>
+        <!-- STATISTIK MANDIRI (SELF METRICS) -->
+        <section class="row g-3 mb-4">
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="muted fw-semibold">Total Pengajuan Pinjam</span>
+                        <div class="stat-icon bg-primary-subtle text-primary">
+                            <i class="bi bi-box-seam"></i>
+                        </div>
+                    </div>
+                    <div class="stat-number text-primary" id="statMyTotalLending">0</div>
+                    <div class="muted small">Seluruh riwayat pengajuan saya</div>
+                </div>
+            </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
- 
-<script src="../js/auth.js"></script>
-<script src="../js/layout.js"></script>
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="muted fw-semibold">Sedang Saya Pinjam</span>
+                        <div class="stat-icon bg-success-subtle text-success">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                    </div>
+                    <div class="stat-number text-success" id="statMyActiveLending">0</div>
+                    <div class="muted small">Aset yang aktif saya gunakan</div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="muted fw-semibold">Menunggu Persetujuan</span>
+                        <div class="stat-icon bg-warning-subtle text-warning-emphasis">
+                            <i class="bi bi-hourglass-split"></i>
+                        </div>
+                    </div>
+                    <div class="stat-number text-warning-emphasis" id="statMyPendingLending">0</div>
+                    <div class="muted small">Menunggu konfirmasi admin</div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="muted fw-semibold">Keluhan Saya Laporkan</span>
+                        <div class="stat-icon bg-danger-subtle text-danger">
+                            <i class="bi bi-chat-left-text"></i>
+                        </div>
+                    </div>
+                    <div class="stat-number text-danger" id="statMyTotalComplaints">0</div>
+                    <div class="muted small">Laporan kendala fasilitas kantor</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- DATA AKTIVITAS MANDIRI: PEMINJAMAN & KELUHAN -->
+        <section class="row g-4">
+            
+            <!-- TABEL 1: PEMINJAMAN TERKINI SAYA -->
+            <div class="col-12 col-xl-7">
+                <div class="content-card">
+                    <div class="card-header-custom">
+                        <div>
+                            <h3><i class="bi bi-box-arrow-up-right text-primary me-2"></i>Peminjaman Aset Saya Terkini</h3>
+                            <small class="text-muted">Daftar peminjaman alat yang Anda ajukan</small>
+                        </div>
+                        <a href="asset-lending.html" class="btn btn-sm btn-outline-primary">
+                            Lihat Semua <i class="bi bi-chevron-right ms-1"></i>
+                        </a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light text-secondary small">
+                                <tr>
+                                    <th>KODE</th>
+                                    <th>ASET INVENTARIS</th>
+                                    <th>JADWAL PINJAM</th>
+                                    <th>STATUS</th>
+                                    <th class="text-end">AKSI</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableMyLendingBody">
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">
+                                        <div class="spinner-border spinner-border-sm text-primary me-2"></div> Memuat data peminjaman saya...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABEL 2: KELUHAN TERKINI SAYA -->
+            <div class="col-12 col-xl-5">
+                <div class="content-card">
+                    <div class="card-header-custom">
+                        <div>
+                            <h3><i class="bi bi-chat-left-dots text-danger me-2"></i>Keluhan Fasilitas Saya</h3>
+                            <small class="text-muted">Proses tindak lanjut kendala kerja</small>
+                        </div>
+                        <a href="complaints.html" class="btn btn-sm btn-outline-danger">
+                            Lihat Semua <i class="bi bi-chevron-right ms-1"></i>
+                        </a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light text-secondary small">
+                                <tr>
+                                    <th>KODE / WAKTU</th>
+                                    <th>ASET & KENDALA</th>
+                                    <th>PRIORITAS</th>
+                                    <th>STATUS</th>
+                                    <th class="text-end">AKSI</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableMyComplaintsBody">
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">
+                                        <div class="spinner-border spinner-border-sm text-danger me-2"></div> Memuat data keluhan saya...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- FOOTER -->
+        <footer>
+            &copy; 2026 Sistem Manajemen Inventaris Cerdas - Portal Layanan Mandiri
+        </footer>
+
+    </main>
+
+    <!-- SCRIPT DEPENDENCIES -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- SCRIPT APLIKASI & LAYOUT -->
+    <script src="../config.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/layout.js"></script>
+
+    <!-- LOGIKA DASHBOARD SELF PATTERN -->
+    <script src="ajax/dashboard.js"></script>
 </body>
 </html>
