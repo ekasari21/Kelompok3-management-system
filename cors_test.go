@@ -78,3 +78,23 @@ func TestStaticFrontendServing(t *testing.T) {
 		}
 	}
 }
+
+func TestChatbotRoutesInEngine(t *testing.T) {
+	router := setupEngine(nil, []byte("test-secret-at-least-32-bytes-long!"))
+
+	// Test public suggestions
+	req := httptest.NewRequest(http.MethodGet, "/api/public/chatbot/suggestions", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("Chatbot public suggestions failed: status %d", w.Code)
+	}
+
+	// Test extra slash handling
+	reqSlash := httptest.NewRequest(http.MethodGet, "//api/public/chatbot/suggestions", nil)
+	wSlash := httptest.NewRecorder()
+	router.ServeHTTP(wSlash, reqSlash)
+	if wSlash.Code != http.StatusOK && wSlash.Code != http.StatusMovedPermanently {
+		t.Fatalf("Chatbot extra slash request failed: status %d", wSlash.Code)
+	}
+}

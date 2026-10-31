@@ -534,7 +534,8 @@ Saya adalah asisten khusus yang siap membantu Anda menjawab pertanyaan seputar <
 
     <!-- LOGIKA CHATBOT TERHUBUNG API -->
     <script>
-        const API_BASE_URL = (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || window.location.origin;
+        const rawBase = (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || window.location.origin;
+        const API_BASE_URL = (rawBase || "").replace(/\/+$/, "");
         const chatBody = document.getElementById("chatBody");
         const chatForm = document.getElementById("chatForm");
         const messageInput = document.getElementById("messageInput");
@@ -651,7 +652,7 @@ Saya adalah asisten khusus yang siap membantu Anda menjawab pertanyaan seputar <
             showTypingIndicator();
 
             try {
-                const response = await fetch(`${API_BASE_URL}/api/private/chatbot/ask`, {
+                let response = await fetch(`${API_BASE_URL}/api/private/chatbot/ask`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -661,17 +662,43 @@ Saya adalah asisten khusus yang siap membantu Anda menjawab pertanyaan seputar <
                     body: JSON.stringify({ message: trimmed })
                 });
 
+                // Fallback ke endpoint publik jika cookie cross-origin terblokir oleh browser di hosting
+                if (response.status === 401) {
+                    try {
+                        const pubResp = await fetch(`${API_BASE_URL}/api/public/chatbot/ask`, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Accept": "application/json"
+                            },
+                            body: JSON.stringify({ message: trimmed })
+                        });
+                        if (pubResp.ok) {
+                            response = pubResp;
+                        }
+                    } catch (pubErr) {
+                        // Abaikan, tetap gunakan respons 401
+                    }
+                }
+
                 removeTypingIndicator();
 
                 if (response.status === 401) {
-                    addMessage("Sesi login Anda telah berakhir. Silakan login kembali untuk melanjutkan konsultasi inventaris.", "bot");
-                    if (window.redirectToLogin) window.redirectToLogin();
+                    addMessage("⚠️ Sesi login Anda telah berakhir atau belum login. Silakan login kembali ke sistem untuk menggunakan asisten inventaris.", "bot");
+                    if (window.redirectToLogin) {
+                        setTimeout(() => window.redirectToLogin(), 1500);
+                    }
+                    return;
+                }
+
+                if (response.status === 404) {
+                    addMessage("⚠️ Layanan chatbot belum aktif di server hosting ini (Error 404). Pastikan backend di hosting telah di-redeploy dengan kode terbaru.", "bot");
                     return;
                 }
 
                 if (!response.ok) {
                     const errData = await response.json().catch(() => ({}));
-                    const errMsg = errData.error || "Terjadi kesalahan saat memproses pertanyaan.";
+                    const errMsg = errData.error || errData.message || `Terjadi kesalahan pada server (Status: ${response.status}).`;
                     addMessage("⚠️ " + errMsg, "bot");
                     return;
                 }
@@ -689,7 +716,7 @@ Saya adalah asisten khusus yang siap membantu Anda menjawab pertanyaan seputar <
             } catch (err) {
                 removeTypingIndicator();
                 console.error("[CHATBOT] Fetch error:", err);
-                addMessage("⚠️ Gagal terhubung ke server asisten inventaris. Pastikan koneksi atau server backend aktif.", "bot");
+                addMessage(`⚠️ Gagal terhubung ke backend (${API_BASE_URL}). Pastikan server backend sedang aktif dan pengaturan CORS (ALLOWED_ORIGIN) telah mengizinkan domain ini.`, "bot");
             } finally {
                 sendButton.disabled = false;
                 messageInput.disabled = false;
@@ -728,10 +755,13 @@ Saya adalah asisten khusus yang siap membantu Anda menjawab pertanyaan seputar <
         // Muat saran awal saat halaman terbuka
         (async function loadInitialSuggestions() {
             try {
-                const res = await fetch(`${API_BASE_URL}/api/private/chatbot/suggestions`, {
+                let res = await fetch(`${API_BASE_URL}/api/private/chatbot/suggestions`, {
                     credentials: "include"
                 });
-                if (res.ok) {
+                if (res.status === 401 || !res.ok) {
+                    res = await fetch(`${API_BASE_URL}/api/public/chatbot/suggestions`).catch(() => null);
+                }
+                if (res && res.ok) {
                     const data = await res.json();
                     if (data && data.suggestions) {
                         updateQuickSuggestions(data.suggestions);

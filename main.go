@@ -37,6 +37,7 @@ import (
 
 func setupEngine(db *gorm.DB, secret []byte) *gin.Engine {
 	r := gin.Default()
+	r.RemoveExtraSlash = true
 
 	r.MaxMultipartMemory = 8 << 20
 
@@ -111,10 +112,18 @@ func setupEngine(db *gorm.DB, secret []byte) *gin.Engine {
 	auth.RegisterRoutes(r, authHandler)
 
 	// =================================================
+	// CHATBOT
+	// =================================================
+
+	chatbotRepo := chatbot.NewRepository(db)
+	chatbotService := chatbot.NewService(chatbotRepo)
+	chatbotHandler := chatbot.NewHandler(chatbotService)
+
+	// =================================================
 	// PUBLIC ROUTES
 	// =================================================
 
-	public.RegisterRoutes(r)
+	public.RegisterRoutes(r, chatbotHandler)
 
 	// Repository dan service autentikasi untuk middleware.
 	repo := auth.NewRepository(db)
@@ -212,15 +221,6 @@ func setupEngine(db *gorm.DB, secret []byte) *gin.Engine {
 		textAnalysisService,
 	)
 
-	// =================================================
- // =================================================
- // CHATBOT
- // =================================================
-
- chatbotRepo := chatbot.NewRepository(db)
- chatbotService := chatbot.NewService(chatbotRepo)
- chatbotHandler := chatbot.NewHandler(chatbotService)
-
 	// PRIVATE ROUTES
 	// =================================================
 
@@ -255,7 +255,15 @@ func setupEngine(db *gorm.DB, secret []byte) *gin.Engine {
 
 	// Fallback file statis dan respons 404.
 	r.NoRoute(func(c *gin.Context) {
-		path := filepath.Clean(c.Request.URL.Path)
+		cleanPath := filepath.Clean(c.Request.URL.Path)
+		cleanSlash := strings.ReplaceAll(cleanPath, "\\", "/")
+		if strings.HasPrefix(cleanSlash, "/api/") || strings.HasPrefix(c.Request.URL.Path, "//api/") {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": fmt.Sprintf("Endpoint API '%s' tidak ditemukan", c.Request.URL.Path),
+			})
+			return
+		}
+		path := cleanPath
 
 		// Hindari membaca path di luar direktori frontend.
 		if filepath.IsAbs(path) || path == "." || path == ".." ||
