@@ -51,22 +51,7 @@ func (s *Service) ProcessMessage(ctx context.Context, rawMessage string) (*ChatR
 		}, nil
 	}
 
-	// 1. Cek apakah pengguna memiliki GEMINI_API_KEY untuk pemrosesan berbasis LLM
-	geminiKey := strings.TrimSpace(os.Getenv("GEMINI_API_KEY"))
-	if geminiKey != "" {
-		llmReply, err := s.tryGeminiAPI(ctx, geminiKey, msg)
-		if err == nil && llmReply != "" {
-			return &ChatResponse{
-				Success:     true,
-				Reply:       llmReply,
-				Intent:      "gemini_assistant",
-				Suggestions: s.getRelevantSuggestions(msg),
-				Timestamp:   time.Now(),
-			}, nil
-		}
-	}
-
-	// 2. Jalankan Natural Language Engine Go deterministik berbasis database riil
+	// 1. Jalankan Natural Language Engine Go deterministik berbasis database riil
 	intent, entity := s.classifyQuery(msg)
 
 	var reply string
@@ -386,9 +371,28 @@ func (s *Service) ProcessMessage(ctx context.Context, rawMessage string) (*ChatR
 		}
 
 	default:
+		// Jika ada GEMINI_API_KEY dan pertanyaan belum cocok dengan pola deterministik, gunakan LLM
+		geminiKey := strings.TrimSpace(os.Getenv("GEMINI_API_KEY"))
+		if geminiKey != "" {
+			llmReply, err := s.tryGeminiAPI(ctx, geminiKey, msg)
+			// Tolak jika Gemini berhalusinasi "hubungkan ke API" atau "tabel assets"
+			if err == nil && llmReply != "" &&
+				!strings.Contains(strings.ToLower(llmReply), "hubungkan") &&
+				!strings.Contains(strings.ToLower(llmReply), "tabel assets") &&
+				!strings.Contains(strings.ToLower(llmReply), "api inventaris") {
+				return &ChatResponse{
+					Success:     true,
+					Reply:       llmReply,
+					Intent:      "gemini_assistant",
+					Suggestions: s.getRelevantSuggestions(msg),
+					Timestamp:   time.Now(),
+				}, nil
+			}
+		}
+
 		reply = "Mohon maaf, saya belum memahami pertanyaan tersebut. " +
-			"Saya adalah Asisten Khusus Inventaris yang hanya melayani pertanyaan seputar stok aset, ketersediaan, " +
-			"peminjaman, aset rusak, kategori, dan lokasi ruangan."
+			"Saya adalah Asisten Khusus Inventaris yang siap melayani pertanyaan seputar data inventaris: " +
+			"stok aset, ketersediaan barang, peminjaman, aset rusak, kategori, dan lokasi ruangan."
 		suggestions = s.GetInitialSuggestions()
 	}
 
@@ -404,6 +408,14 @@ func (s *Service) ProcessMessage(ctx context.Context, rawMessage string) (*ChatR
 // classifyQuery mengklasifikasikan pertanyaan dan mengecek apakah terkait data inventaris atau di luar domain.
 func (s *Service) classifyQuery(q string) (Intent, string) {
 	norm := strings.ToLower(strings.TrimSpace(q))
+
+	// Normalisasi ejaan dan typo umum: asset -> aset, berap -> berapa, dll
+	norm = strings.ReplaceAll(norm, "asset", "aset")
+	norm = strings.ReplaceAll(norm, "berap ", "berapa ")
+	norm = strings.ReplaceAll(norm, "brp ", "berapa ")
+	norm = strings.ReplaceAll(norm, "jml ", "jumlah ")
+	norm = strings.ReplaceAll(norm, "tot ", "total ")
+	norm = strings.ReplaceAll(norm, "stock", "stok")
 
 	// Hapus tanda baca di awal/akhir
 	norm = regexp.MustCompile(`^[^\w]+|[^\w]+$`).ReplaceAllString(norm, "")
@@ -666,15 +678,16 @@ func (s *Service) tryGeminiAPI(ctx context.Context, apiKey, userMessage string) 
 	sysInstruction := fmt.Sprintf(
 		"Kamu adalah Asisten Khusus Data Inventaris pada Sistem Manajemen Inventaris & Aset (Kelompok 3).\n\n"+
 			"ATURAN MUTLAK:\n"+
-			"1. Kamu HANYA DAN HANYA BOLEH menjawab pertanyaan seputar data inventaris (stok aset, ketersediaan, peminjaman barang, aset rusak, kategori, lokasi ruangan, dan prosedur SOP inventaris).\n"+
-			"2. JIKA pengguna menanyakan apapun di luar topik data inventaris (seperti politik, cuaca, hiburan, resep makanan, coding tutorial umum, lelucon, atau pengetahuan umum selain aset sistem), kamu WAJIB MENOLAK secara sopan dan tegas dengan jawaban: 'Mohon maaf, saya adalah Asisten Khusus Data Inventaris. Sesuai aturan sistem, saya hanya dapat menjawab pertanyaan seputar data inventaris (seperti ketersediaan aset, stok barang, peminjaman, aset rusak, kategori, dan lokasi ruangan). Silakan ajukan pertanyaan terkait data inventaris.'\n"+
-			"3. Fakta inventaris terkini saat ini:\n"+
+			"1. Kamu SUDAH TERHUBUNG LANGSUNG SECARA REAL-TIME ke database PostgreSQL inventaris sistem. DILARANG KERAS mengatakan kamu tidak terhubung ke API, DILARANG menyuruh menghubungkan ke API, dan DILARANG menyuruh menghitung tabel assets secara manual.\n"+
+			"2. Kamu HANYA DAN HANYA BOLEH menjawab pertanyaan seputar data inventaris (stok aset, ketersediaan, peminjaman barang, aset rusak, kategori, lokasi ruangan, dan prosedur SOP inventaris).\n"+
+			"3. JIKA pengguna menanyakan apapun di luar topik data inventaris (seperti politik, cuaca, hiburan, resep makanan, coding umum, lelucon, atau pengetahuan umum selain aset sistem), kamu WAJIB MENOLAK secara sopan dan tegas dengan jawaban: 'Mohon maaf, saya adalah Asisten Khusus Data Inventaris. Sesuai aturan sistem, saya hanya dapat menjawab pertanyaan seputar data inventaris (seperti ketersediaan aset, stok barang, peminjaman, aset rusak, kategori, dan lokasi ruangan). Silakan ajukan pertanyaan terkait data inventaris.'\n"+
+			"4. Data riil aktual database sistem saat ini:\n"+
 			"   - Total unit aset: %d unit (%d jenis aset aktif)\n"+
 			"   - Aset tersedia: %d unit\n"+
 			"   - Aset sedang dipinjam: %d unit\n"+
 			"   - Aset rusak: %d unit (%d unit bisa diperbaiki, %d unit rusak berat)\n"+
 			"   - Total Kategori: %d, Total Lokasi: %d.\n"+
-			"Jawablah dengan bahasa Indonesia yang ramah, profesional, ringkas, dan jelas menggunakan format Markdown.",
+			"Jika pengguna bertanya tentang jumlah, stok, atau data inventaris, SEBUTKAN LANGSUNG data angka di atas secara ramah, profesional, dan akurat menggunakan Markdown.",
 		summary.TotalUnitAset, summary.TotalJenisAset,
 		summary.AsetTersedia,
 		summary.AsetDipinjam,

@@ -28,14 +28,20 @@ func (r *Repository) GetInventorySummary(ctx context.Context) (*InventorySummary
 
 	// 1. Total Jenis Aset Aktif
 	_ = db.Table("assets").
-		Where("status = ?", true).
+		Where("status = ? OR status IS TRUE", true).
 		Count(&summary.TotalJenisAset).Error
 
 	// 2. Total Keseluruhan Unit Aset Aktif
 	_ = db.Table("assets").
-		Where("status = ?", true).
+		Where("status = ? OR status IS TRUE", true).
 		Select("COALESCE(SUM(qty_in), 0)").
 		Scan(&summary.TotalUnitAset).Error
+
+	// Fallback jika belum ada data yang status-nya true secara eksplisit
+	if summary.TotalJenisAset == 0 {
+		_ = db.Table("assets").Count(&summary.TotalJenisAset).Error
+		_ = db.Table("assets").Select("COALESCE(SUM(qty_in), 0)").Scan(&summary.TotalUnitAset).Error
+	}
 
 	// 3. Total Unit Sedang Dipinjam
 	_ = db.Table("lending_assets").

@@ -57,6 +57,10 @@ func TestChatbotInventoryRule(t *testing.T) {
 		{"Bagaimana cara pinjam aset di sistem?", IntentProcedure},
 		{"Apakah ada laptop yang ready?", IntentAssetSearch},
 		{"Cek stok proyektor", IntentAssetSearch},
+		{"berap jumlah asset total", IntentSummary},
+		{"berapa total asset", IntentSummary},
+		{"jumlah asset", IntentSummary},
+		{"stok asset tersedia", IntentAvailable},
 	}
 
 	for _, tt := range inventoryTests {
