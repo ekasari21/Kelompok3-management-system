@@ -15,6 +15,7 @@ import (
 	"gin-auth/internal/assetlending"
 	"gin-auth/internal/auth"
 	"gin-auth/internal/category"
+	"gin-auth/internal/chatbot"
 	"gin-auth/internal/complaint"
 	"gin-auth/internal/dashboard"
 	"gin-auth/internal/database"
@@ -212,6 +213,14 @@ func setupEngine(db *gorm.DB, secret []byte) *gin.Engine {
 	)
 
 	// =================================================
+ // =================================================
+ // CHATBOT
+ // =================================================
+
+ chatbotRepo := chatbot.NewRepository(db)
+ chatbotService := chatbot.NewService(chatbotRepo)
+ chatbotHandler := chatbot.NewHandler(chatbotService)
+
 	// PRIVATE ROUTES
 	// =================================================
 
@@ -227,6 +236,7 @@ func setupEngine(db *gorm.DB, secret []byte) *gin.Engine {
 		assetLendingHandler,
 		userHandler,
 		textAnalysisHandler,
+ chatbotHandler,
 	)
 
 	// =================================================

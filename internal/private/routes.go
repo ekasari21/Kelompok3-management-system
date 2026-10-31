@@ -7,6 +7,7 @@ import (
 	"gin-auth/internal/assetbroken"
 	"gin-auth/internal/assetlending"
 	"gin-auth/internal/category"
+	"gin-auth/internal/chatbot"
 	"gin-auth/internal/complaint"
 	"gin-auth/internal/dashboard"
 	"gin-auth/internal/location"
@@ -29,6 +30,7 @@ func RegisterRoutes(
 	assetLendingHandler *assetlending.Handler,
 	userHandler *user.Handler,
 	textAnalysisHandler *textanalysis.Handler,
+	chatbotHandler *chatbot.Handler,
 ) {
 	group := r.Group("/api/private")
 	group.Use(requireAuth)
@@ -44,6 +46,9 @@ func RegisterRoutes(
 
 	// Endpoint analisis teks keluhan dan kerusakan.
 	textanalysis.RegisterRoutes(group, textAnalysisHandler)
+
+	// Endpoint asisten AI chatbot khusus data inventaris.
+	chatbot.RegisterRoutes(group, chatbotHandler)
 
 	group.GET(
 		"/profile",

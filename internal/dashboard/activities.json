@@ -1,5 +1,17 @@
 [
   {
+    "id": 4,
+    "activity_type": "asset_created",
+    "description": "Menambahkan aset Thinkpad X13. Deskripsi: Thinkpad",
+    "created_at": "2026-10-30T10:33:28.4456753+07:00"
+  },
+  {
+    "id": 3,
+    "activity_type": "complaint_created",
+    "description": "Membuat keluhan: Laptop Eror. Deskripsi: Laptop Eror kedip-kedip",
+    "created_at": "2026-10-30T09:46:11.7182398+07:00"
+  },
+  {
     "id": 2,
     "activity_type": "asset_updated",
     "description": "Memperbarui aset Almari Buku. Deskripsi: ",

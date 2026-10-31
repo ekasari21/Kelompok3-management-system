@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Asisten Inventaris Cerdas - User</title>
+
+    <!-- Bootstrap & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #f1f5f9;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            color: #1e293b;
+        }
+
+        /* SIDEBAR USER */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 250px;
+            height: 100vh;
+            padding: 22px 14px;
+            background: #102a56;
+            color: #ffffff;
+            overflow-y: auto;
+            overflow-x: hidden;
+            z-index: 1050;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 4px 0 18px rgba(15, 23, 42, 0.12);
+        }
+
+        .sidebar .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 4px 10px 24px;
+            margin-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .sidebar .brand-icon {
+            width: 42px;
+            height: 42px;
+            min-width: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: #2563eb;
+            color: white;
+            font-size: 22px;
+        }
+
+        .sidebar .brand-text {
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 1.5;
+        }
+
+        .sidebar .brand-text small {
+            display: block;
+            font-size: 12px;
+        }
+
+        .sidebar .menu-title {
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            color: #94a3b8;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .sidebar nav {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .sidebar .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 9px;
+            color: #cbd5e1;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .sidebar .nav-link i {
+            width: 21px;
+            min-width: 21px;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        .sidebar .nav-link:hover {
+            background: rgba(255, 255, 255, 0.09);
+            color: #ffffff;
+        }
+
+        .sidebar .nav-link.active {
+            background: #2563eb;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .sidebar .nav-link.logout {
+            margin-top: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 0 0 9px 9px;
+            padding-top: 18px;
+        }
+
+        .sidebar .nav-link.logout:hover {
+            background: #991b1b;
+            color: #ffffff;
+        }
+
+        /* AREA KONTEN UTAMA */
+        .main-content {
+            margin-left: 250px;
+            width: calc(100% - 250px);
+            min-height: 100vh;
+            padding: 24px;
+            transition: margin-left 0.3s ease;
+        }
+
+        /* CONTAINER CHATBOT */
+        .chat-container {
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #e2e8f0;
+        }
+
+        .chat-header {
+            background: #102a56;
+            color: white;
+            padding: 20px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .chat-header h4 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .bot-avatar {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .online-dot {
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            background: #4ade80;
+            border-radius: 50%;
+            margin-right: 6px;
+            box-shadow: 0 0 8px #4ade80;
+        }
+
+        /* CHAT BODY */
+        .chat-body {
+            height: 480px;
+            overflow-y: auto;
+            padding: 24px;
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .message-row {
+            display: flex;
+            width: 100%;
+        }
+
+        .message-row.user-row {
+            justify-content: flex-end;
+        }
+
+        .message {
+            max-width: 82%;
+            padding: 14px 18px;
+            border-radius: 16px;
+            font-size: 14.5px;
+            line-height: 1.6;
+            word-break: break-word;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+        }
+
+        .bot-message {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            color: #1e293b;
+            border-top-left-radius: 4px;
+        }
+
+        .user-message {
+            background: #2563eb;
+            color: #ffffff;
+            border-top-right-radius: 4px;
+        }
+
+        .message-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            margin-bottom: 6px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .bot-message .message-label {
+            color: #2563eb;
+        }
+
+        .user-message .message-label {
+            color: rgba(255, 255, 255, 0.85);
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            white-space: pre-line;
+        }
+
+        .message-content strong {
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .user-message .message-content strong {
+            color: #ffffff;
+        }
+
+        .message-content code {
+            background: #e2e8f0;
+            color: #0f172a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .user-message .message-content code {
+            background: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+        }
+
+        /* TYPING INDICATOR */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 10px 14px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            width: fit-content;
+        }
+
+        .typing-dot {
+            width: 7px;
+            height: 7px;
+            background: #94a3b8;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+
+        /* PERTANYAAN CEPAT */
+        .quick-questions {
+            padding: 16px 24px 10px;
+            background: #ffffff;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .section-label {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            color: #64748b;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .quick-btn {
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            color: #334155;
+            border-radius: 20px;
+            padding: 8px 14px;
+            margin: 0 6px 8px 0;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .quick-btn:hover {
+            background: #eff6ff;
+            border-color: #3b82f6;
+            color: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        /* INPUT FOOTER */
+        .chat-footer {
+            padding: 16px 24px 20px;
+            border-top: 1px solid #e2e8f0;
+            background: white;
+        }
+
+        #messageInput {
+            border-radius: 24px;
+            padding: 12px 20px;
+            border: 1.5px solid #cbd5e1;
+            font-size: 14.5px;
+        }
+
+        #messageInput:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        #sendButton {
+            border-radius: 24px;
+            padding: 0 26px;
+            font-weight: 600;
+        }
+
+        .rule-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(37, 99, 235, 0.1);
+            color: #1d4ed8;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 220px;
+            }
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 14px;
+            }
+            .chat-body {
+                height: 400px;
+            }
+            .message {
+                max-width: 92%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- SIDEBAR -->
+    <div id="sidebar-container"></div>
+
+    <!-- KONTEN UTAMA -->
+    <main class="main-content">
+        <div class="chat-container">
+
+            <!-- HEADER CHATBOT -->
+            <div class="chat-header">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="bot-avatar">🤖</div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <h4>Asisten Inventaris Cerdas</h4>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">Khusus Data Inventaris</span>
+                        </div>
+                        <div class="small text-white-50 mt-1">
+                            Pusat informasi aset, ketersediaan stok, peminjaman, dan panduan pengajuan barang
+                        </div>
+                        <div class="mt-1 small">
+                            <span class="online-dot"></span>
+                            Terhubung Real-Time ke Database Inventaris
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-light" id="clearChatBtn" title="Bersihkan Percakapan">
+                        <i class="bi bi-trash"></i> Bersihkan Chat
+                    </button>
+                </div>
+            </div>
+
+            <!-- RIWAYAT PESAN -->
+            <div id="chatBody" class="chat-body">
+                <div class="message-row">
+                    <div class="message bot-message">
+                        <span class="message-label">
+                            <i class="bi bi-robot"></i> Asisten Inventaris
+                        </span>
+                        <div class="message-content">Halo! Selamat datang di layanan informasi inventaris sistem.
+
+Saya adalah asisten khusus yang siap membantu Anda menjawab pertanyaan seputar <strong>data inventaris</strong>:
+• 📦 Jumlah total unit & jenis aset
+• ✅ Aset tersedia dan ketersediaan stok
+• 📋 Daftar peminjaman aktif & batas pengembalian
+• 🔧 Data aset rusak & perbaikan
+• 🏢 Lokasi penempatan barang / ruangan
+• 🏷️ Master kategori barang
+• 📝 Prosedur peminjaman & pelaporan keluhan
+
+<em>Catatan: Sesuai aturan sistem, saya hanya merespons pertanyaan seputar data inventaris.</em></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PERTANYAAN CEPAT -->
+            <div class="quick-questions">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="section-label mb-0">💡 Rekomendasi Pertanyaan Cepat</div>
+                </div>
+                <div id="quickQuestionsContainer">
+                    <button type="button" class="quick-btn" onclick="askQuestion('Aset apa saja yang tersedia?')">
+                        ✅ Aset apa saja yang tersedia?
+                    </button>
+                    <button type="button" class="quick-btn" onclick="askQuestion('Bagaimana alur peminjaman aset?')">
+                        📝 Alur peminjaman aset
+                    </button>
+                    <button type="button" class="quick-btn" onclick="askQuestion('Berapa jumlah total aset?')">
+                        📦 Berapa jumlah total aset?
+                    </button>
+                    <button type="button" class="quick-btn" onclick="askQuestion('Di mana saja lokasi penyimpanan aset?')">
+                        🏢 Lokasi ruangan aset
+                    </button>
+                    <button type="button" class="quick-btn" onclick="askQuestion('Berapa jumlah aset rusak?')">
+                        🔧 Berapa jumlah aset rusak?
+                    </button>
+                    <button type="button" class="quick-btn" onclick="askQuestion('Siapa yang sedang meminjam barang?')">
+                        📋 Siapa saja peminjam aktif?
+                    </button>
+                </div>
+            </div>
+
+            <!-- INPUT PESAN -->
+            <div class="chat-footer">
+                <form id="chatForm" class="d-flex gap-2">
+                    <input
+                        type="text"
+                        id="messageInput"
+                        class="form-control"
+                        placeholder="Tanyakan stok, ketersediaan, peminjaman, atau lokasi aset..."
+                        autocomplete="off"
+                        required>
+
+                    <button type="submit" id="sendButton" class="btn btn-primary d-flex align-items-center gap-2">
+                        <span>Kirim</span>
+                        <i class="bi bi-send-fill"></i>
+                    </button>
+                </form>
+
+                <div class="d-flex justify-content-between align-items-center mt-2 small text-secondary">
+                    <span>Aturan sistem: Bot hanya merespons pertanyaan seputar data inventaris.</span>
+                    <span class="rule-badge"><i class="bi bi-shield-check"></i> Mode Inventaris Aktif</span>
+                </div>
+            </div>
+
+        </div>
+
+        <footer class="text-center text-muted small mt-4">
+            &copy; 2026 Sistem Manajemen Inventaris & Aset (Kelompok 3)
+        </footer>
+    </main>
+
+    <!-- LIBRARY & SCRIPTS -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- AUTH DAN LAYOUT -->
+    <script src="../config.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/layout.js"></script>
+
+    <!-- LOGIKA CHATBOT TERHUBUNG API -->
+    <script>
+        const API_BASE_URL = (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || window.location.origin;
+        const chatBody = document.getElementById("chatBody");
+        const chatForm = document.getElementById("chatForm");
+        const messageInput = document.getElementById("messageInput");
+        const sendButton = document.getElementById("sendButton");
+        const clearChatBtn = document.getElementById("clearChatBtn");
+        const quickContainer = document.getElementById("quickQuestionsContainer");
+
+        // Format teks bot dengan aman (Markdown sederhana: bold, code, list)
+        function formatBotText(rawText) {
+            if (!rawText) return "";
+
+            let escaped = rawText
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+
+            escaped = escaped.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+            escaped = escaped.replace(/`([^`]+)`/g, "<code>$1</code>");
+
+            return escaped;
+        }
+
+        function addMessage(message, sender) {
+            const row = document.createElement("div");
+            row.className = "message-row" + (sender === "user" ? " user-row" : "");
+
+            const bubble = document.createElement("div");
+            bubble.className = "message " + (sender === "user" ? "user-message" : "bot-message");
+
+            const label = document.createElement("span");
+            label.className = "message-label";
+            if (sender === "user") {
+                label.innerHTML = '<i class="bi bi-person-fill"></i> Anda';
+            } else {
+                label.innerHTML = '<i class="bi bi-robot"></i> Asisten Inventaris';
+            }
+
+            const content = document.createElement("div");
+            content.className = "message-content";
+
+            if (sender === "user") {
+                content.textContent = message;
+            } else {
+                content.innerHTML = formatBotText(message);
+            }
+
+            bubble.appendChild(label);
+            bubble.appendChild(content);
+            row.appendChild(bubble);
+
+            chatBody.appendChild(row);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            removeTypingIndicator();
+
+            const row = document.createElement("div");
+            row.className = "message-row";
+            row.id = "typingRow";
+
+            const indicator = document.createElement("div");
+            indicator.className = "typing-indicator";
+            indicator.innerHTML = `
+                <span class="small text-muted me-1">Sedang memeriksa data inventaris</span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+            `;
+
+            row.appendChild(indicator);
+            chatBody.appendChild(row);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const el = document.getElementById("typingRow");
+            if (el) {
+                el.remove();
+            }
+        }
+
+        function updateQuickSuggestions(suggestions) {
+            if (!suggestions || !Array.isArray(suggestions) || suggestions.length === 0) return;
+
+            quickContainer.innerHTML = "";
+            suggestions.forEach(item => {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "quick-btn";
+                btn.textContent = item;
+                btn.onclick = () => askQuestion(item);
+                quickContainer.appendChild(btn);
+            });
+        }
+
+        async function askQuestion(question) {
+            const trimmed = (question || "").trim();
+            if (!trimmed) return;
+
+            addMessage(trimmed, "user");
+            messageInput.value = "";
+            sendButton.disabled = true;
+            messageInput.disabled = true;
+
+            showTypingIndicator();
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/private/chatbot/ask`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    credentials: "include",
+                    body: JSON.stringify({ message: trimmed })
+                });
+
+                removeTypingIndicator();
+
+                if (response.status === 401) {
+                    addMessage("Sesi login Anda telah berakhir. Silakan login kembali untuk melanjutkan konsultasi inventaris.", "bot");
+                    if (window.redirectToLogin) window.redirectToLogin();
+                    return;
+                }
+
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    const errMsg = errData.error || "Terjadi kesalahan saat memproses pertanyaan.";
+                    addMessage("⚠️ " + errMsg, "bot");
+                    return;
+                }
+
+                const data = await response.json();
+                if (data && data.reply) {
+                    addMessage(data.reply, "bot");
+                    if (data.suggestions && data.suggestions.length > 0) {
+                        updateQuickSuggestions(data.suggestions);
+                    }
+                } else {
+                    addMessage("Tidak ada jawaban dari sistem inventaris.", "bot");
+                }
+
+            } catch (err) {
+                removeTypingIndicator();
+                console.error("[CHATBOT] Fetch error:", err);
+                addMessage("⚠️ Gagal terhubung ke server asisten inventaris. Pastikan koneksi atau server backend aktif.", "bot");
+            } finally {
+                sendButton.disabled = false;
+                messageInput.disabled = false;
+                messageInput.focus();
+            }
+        }
+
+        chatForm.addEventListener("submit", function (e) {
+            e.preventDefault();
+            const q = messageInput.value.trim();
+            if (q) {
+                askQuestion(q);
+            }
+        });
+
+        clearChatBtn.addEventListener("click", function () {
+            chatBody.innerHTML = `
+                <div class="message-row">
+                    <div class="message bot-message">
+                        <span class="message-label">
+                            <i class="bi bi-robot"></i> Asisten Inventaris
+                        </span>
+                        <div class="message-content">Percakapan telah direset. Silakan ajukan pertanyaan seputar data inventaris:
+• Stok dan ketersediaan aset
+• Status aset rusak dan perbaikan
+• Data peminjaman barang
+• Lokasi penyimpanan aset & kategori</div>
+                    </div>
+                </div>
+            `;
+            messageInput.focus();
+        });
+
+        (async function loadInitialSuggestions() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/private/chatbot/suggestions`, {
+                    credentials: "include"
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.suggestions) {
+                        updateQuickSuggestions(data.suggestions);
+                    }
+                }
+            } catch (e) {
+                // Abaikan jika offline
+            }
+        })();
+    </script>
+</body>
+</html>
